@@ -1,0 +1,193 @@
+
+INSTALACIÓN DE OLLAMA (IA LOCAL) EN WINDOWS
+==========================================
+
+1) DESCARGAR OLLAMA
+-------------------
+1. Abre el navegador.
+2. Ve a: https://ollama.com
+3. Pulsa "Download for Windows".
+4. Descarga el instalador (.exe).
+
+
+2) INSTALAR OLLAMA
+------------------
+1. Haz doble clic en el archivo descargado.
+2. Sigue el asistente (siguiente, aceptar, siguiente).
+3. Finaliza la instalación.
+4. REINICIA EL ORDENADOR (importante).
+
+
+3) COMPROBAR LA INSTALACIÓN
+---------------------------
+1. Abre PowerShell (o CMD).
+2. Escribe:
+
+   ollama --version
+
+3. Si aparece algo como:
+   "ollama version X.Y.Z"
+
+   entonces Ollama está correctamente instalado.
+
+
+4) DESCARGAR UN MODELO (UNA SOLA VEZ)
+-------------------------------------
+Para este proyecto se recomienda LLaMA 3.
+
+En PowerShell:
+
+   ollama pull llama3
+
+Esto descargará el modelo (varios GB).
+Este paso solo se hace una vez.
+
+
+5) PROBAR QUE FUNCIONA
+----------------------
+En PowerShell:
+
+   ollama run llama3
+
+Escribe algo simple, por ejemplo:
+
+   Hello
+
+Si el modelo responde texto, está funcionando.
+
+Para salir:
+   CTRL + C
+
+
+6) SERVIDOR LOCAL DE OLLAMA
+---------------------------
+Ollama levanta automáticamente un servidor local en:
+
+   http://localhost:11434
+
+No hay que iniciarlo a mano.
+Se ejecuta en segundo plano.
+
+
+7) USAR OLLAMA DESDE PYTHON
+---------------------------
+En tu código Python, la llamada correcta es:
+
+------------------------------------------------
+def call_llm(prompt: str) -> str:
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={
+            "model": "llama3",
+            "prompt": prompt,
+            "stream": False
+        },
+        timeout=120
+    )
+    response.raise_for_status()
+    return response.json()["response"]
+------------------------------------------------
+
+No se necesita:
+- API key
+- cuenta externa
+- conexión a servicios remotos
+
+
+8) RESUMEN FINAL
+----------------
+✔ Ollama instalado
+✔ Modelo llama3 descargado
+✔ Servidor local activo
+✔ Funciona sin límites ni rate limit
+✔ Ideal para Step 1 y análisis semántico
+
+LINUX
+
+
+
+INSTALACIÓN DE OLLAMA (IA LOCAL) EN UBUNTU (SIN SUDO / SIN CURL)
+=============================================================
+
+1) DESCARGAR OLLAMA
+-------------------
+Como no tienes curl ni permisos de administrador, usamos wget para bajar
+el binario ejecutable directamente desde el repositorio oficial:
+
+   wget https://github.com/ollama/ollama/releases/download/v0.1.32/ollama-linux-amd64 -O ollama
+
+
+2) INSTALAR OLLAMA
+------------------
+En Linux, al no ser sudoer, la "instalación" consiste en dar permisos de
+ejecución al archivo descargado:
+
+   chmod +x ollama
+
+*No es necesario reiniciar el sistema.*
+
+
+3) COMPROBAR LA INSTALACIÓN
+---------------------------
+Para ejecutarlo, siempre debes usar "./" delante si estás en la misma carpeta:
+
+   ./ollama --version
+
+Si aparece "ollama version 0.1.32", está listo.
+
+
+4) INICIAR EL SERVIDOR (IMPORTANTE)
+-----------------------------------
+A diferencia de Windows, aquí debes lanzar el servidor manualmente. Para que
+no bloquee tu terminal, úsalo con el símbolo "&":
+
+   ./ollama serve &
+
+Esto activará el servidor en http://localhost:11434
+
+
+5) DESCARGAR UN MODELO (UNA SOLA VEZ)
+-------------------------------------
+Para este proyecto usamos LLaMA 3:
+
+   ./ollama pull llama3
+
+Esto descargará unos 4.7 GB a tu carpeta personal (~/.ollama).
+
+
+6) PROBAR QUE FUNCIONA
+----------------------
+Prueba el chat interactivo:
+
+   ./ollama run llama3
+
+Escribe "Hello" para probar. Para salir usa: CTRL + D
+
+
+7) USAR OLLAMA DESDE PYTHON
+---------------------------
+El código es idéntico al de Windows. Asegúrate de que el servidor (paso 4)
+esté corriendo antes de ejecutar tu script.
+
+------------------------------------------------
+def call_llm(prompt: str) -> str:
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={
+            "model": "llama3",
+            "prompt": prompt,
+            "stream": False
+        },
+        timeout=120
+    )
+    response.raise_for_status()
+    return response.json()["response"]
+------------------------------------------------
+
+
+8) NOTAS PARA EL SERVIDOR ALCOR
+-------------------------------
+- Si cierras la terminal, es posible que el proceso se detenga.
+- Para mantenerlo vivo al cerrar sesión usa:
+  nohup ./ollama serve > ollama.log 2>&1 &
+- No necesitas API Keys ni conexión a internet tras bajar el mod
