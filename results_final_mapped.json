@@ -1,0 +1,271 @@
+[
+  {
+    "id": 1,
+    "sentence": "Vital signs should be recorded every 4 hours.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEvery",
+        "bound": {
+          "value": 4.0,
+          "unit": "hours"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G F y.(first_clinical_visit_recording & (y[nTimestamp] - x[nTimestamp]) <= 14400)"
+  },
+  {
+    "id": 2,
+    "sentence": "Patients with diabetes should receive a glucose test every morning.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEvery",
+        "bound": {
+          "value": 24.0,
+          "unit": "hours"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "sSnomed",
+          "type": "graph",
+          "concept": "Atopic condition",
+          "role": "condition"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(PROP.sSnomed(x) -> F y.(allergy_screening_check & (y[nTimestamp] - x[nTimestamp]) <= 86400))"
+  },
+  {
+    "id": 3,
+    "sentence": "If a patient has fever, they should eventually receive paracetamol.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEventually",
+        "bound": null,
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "condition"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(infection_onset -> F y.(standard_medication_delivery))"
+  },
+  {
+    "id": 4,
+    "sentence": "If the patient has hypertension, they must receive amlodipine within 24 hours.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tWithin",
+        "bound": {
+          "value": 24.0,
+          "unit": "hours"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "condition"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(Potential_COPD_Smoker -> X F y.(provide_antihistamine & (y[nTimestamp] - x[nTimestamp]) <= 86400))"
+  },
+  {
+    "id": 5,
+    "sentence": "If an allergy is detected, epinephrine must be administered within 5 minutes.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tWithin",
+        "bound": {
+          "value": 5.0,
+          "unit": "minutes"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "sSnomed",
+          "type": "graph",
+          "concept": "Allergy Unspecified",
+          "role": "condition"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(PROP.sSnomed(x) -> X F y.(emergency_epipen_injection & (y[nTimestamp] - x[nTimestamp]) <= 300))"
+  },
+  {
+    "id": 6,
+    "sentence": "If a patient reports pain, they should eventually receive analgesia.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEventually",
+        "bound": null,
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "condition"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(Initial_symptom_report -> F y.(initiate_allergy_care_plan))"
+  },
+  {
+    "id": 7,
+    "sentence": "If a patient is in the ICU, monitoring must always be active.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tAlways",
+        "bound": null,
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "condition"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(Living_With_Allergies -> continuous_specialist_guard)"
+  },
+  {
+    "id": 8,
+    "sentence": "If oxygen saturation drops, supplemental oxygen must be provided within 10 minutes.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tWithin",
+        "bound": {
+          "value": 10.0,
+          "unit": "minutes"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "sSnomed",
+          "type": "graph",
+          "concept": "respiratory reaction",
+          "role": "condition"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(PROP.sSnomed(x) -> X F y.(apply_immunotherapy_support & (y[nTimestamp] - x[nTimestamp]) <= 600))"
+  },
+  {
+    "id": 9,
+    "sentence": "The patient should remain fasting until surgery is performed.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tUntil",
+        "bound": null,
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "condition"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "(Delay_For_Atopy U allergy_panel_procedure)"
+  },
+  {
+    "id": 10,
+    "sentence": "If a laboratory result is abnormal, a follow-up test should eventually be performed.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEventually",
+        "bound": null,
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "sSnomed",
+          "type": "graph",
+          "concept": "Environmental Allergy",
+          "role": "condition"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Administer_Allergy_Test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(PROP.sSnomed(x) -> F y.(conduct_skin_test))"
+  }
+]

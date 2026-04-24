@@ -1,2 +1,21 @@
 ./ollama serve &
+
+./ollama serve > /dev/null 2>&1 &
+
 ./ollama run llama3 "Hello"
+
+
+1. Verificar el estado de los archivos:
+   git status
+
+2. Añadir los cambios al área de preparación (Staging):
+   git add .
+
+3. Crear el commit con un mensaje descriptivo:
+   git commit -m "Descripción de los cambios realizados"
+
+4. Bajar cambios remotos para evitar conflictos (Sincronizar):
+   git pull origin main
+
+5. Subir tus cambios al repositorio en GitHub:
+   git push origin main

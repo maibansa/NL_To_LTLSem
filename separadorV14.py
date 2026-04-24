@@ -12,7 +12,6 @@ from pydantic import BaseModel, ValidationError, field_validator
 
 TEST_SENTENCES = [
     "Vital signs should be recorded every 4 hours.",
-    "Se registrará un medicamento sin que intervenga un farmacéutico.",
     "Patients with diabetes should receive a glucose test every morning.",
     "If a patient has fever, they should eventually receive paracetamol.",
     "If the patient has hypertension, they must receive amlodipine within 24 hours.",
@@ -21,8 +20,7 @@ TEST_SENTENCES = [
     "If a patient is in the ICU, monitoring must always be active.",
     "If oxygen saturation drops, supplemental oxygen must be provided within 10 minutes.",
     "The patient should remain fasting until surgery is performed.",
-    "If a laboratory result is abnormal, a follow-up test should eventually be performed.",    
-    "Se llevará a cabo un procedimiento para administrar una prueba de alergia con la intervención de un técnico de laboratorio.",
+    "If a laboratory result is abnormal, a follow-up test should eventually be performed."
 ]
 
 # ============================================================
@@ -186,7 +184,7 @@ def step1(text: str, log_ontology: Dict, ltl_ontology: Dict) -> Optional[Step1IR
     return parse_step1_ir(output)
 
 # ============================================================
-# STEP 2 – LTL / DLTL (LOGICA REFINADA)
+# STEP 1.5 – LTL / DLTL (LOGICA REFINADA)
 # ============================================================
 
 def proposition_to_ltl_placeholder(p: Proposition, var: str) -> str:
@@ -269,50 +267,59 @@ def step15_to_ltl(ir: Step1IR) -> str:
         return f"({cond_ltl(x)} U {act_ltl(y)})"
 
     raise ValueError(f"Unsupported temporal operator {t.operator}")
+
 # ============================================================
-# MAIN
+# MAIN (NL -> IR -> LTL) - FORMATO VISUAL COMPLETO
 # ============================================================
 
 if __name__ == "__main__":
-    print("Running NL -> IR -> LTL (Multi-Ontology Edition)\n")
+    print("\n🚀 INICIANDO SISTEMA DE TRADUCCIÓN CLÍNICA")
+    print("=" * 70)
+    
+    # Carga de recursos
     log_ontology = load_ontology(LOG_ONTOLOGY_FILE)
     ltl_ontology = load_ontology(LTL_ONTOLOGY_FILE)
-
-    # Lista para acumular los resultados
+    output_file = "results_output.json"
     all_results = []
 
     for i, sentence in enumerate(TEST_SENTENCES, start=1):
-        print("=" * 70)
-        print(f"Example {i}: {sentence}")
-
+        print(f"\n📝 PROCESANDO [{i}/{len(TEST_SENTENCES)}]: {sentence}")
+        
+        # 1. Ejecución del Modelo (IR)
         ir = step1(sentence, log_ontology, ltl_ontology)
 
         if ir is None:
-            print("Step 1 failed")
+            print("   ❌ ERROR: El Paso 1 (Ollama) no devolvió datos válidos.")
             continue
 
-        print("\nStep 1 IR:")
+        # MOSTRAR JSON POR PANTALLA
+        print("\n📦 STEP 1 IR (JSON):")
         print(ir.model_dump_json(indent=2))
 
-        current_ltl = ""
+        # 2. Generación de LTL (Query)
+        current_ltl = "ERROR"
         try:
             current_ltl = step15_to_ltl(ir)
-            print("\nGenerated LTL/DLTL:")
-            print(current_ltl)
+            # MOSTRAR QUERY POR PANTALLA
+            print("\n⚙️  GENERATED LTL/DLTL QUERY:")
+            print(f"   {current_ltl}")
         except Exception as e:
-            current_ltl = f"Error: {e}"
-            print(f"\nLTL Generation error: {e}")
-        
-        # Guardar objeto para el JSON externo
-        all_results.append({
+            print(f"\n   ⚠️ LTL Generation error: {e}")
+
+        # 3. GUARDADO EN EL FICHERO JSON
+        result_item = {
             "id": i,
             "sentence": sentence,
             "ir": ir.model_dump(),
             "ltl": current_ltl
-        })
+        }
+        all_results.append(result_item)
+        
+        # Guardado incremental para no perder datos si la CPU se cuelga
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(all_results, f, indent=2, ensure_ascii=False)
+            
+        print("-" * 70)
 
-    # Escritura del fichero externo al finalizar el bucle
-    with open("results_output.json", "w", encoding="utf-8") as f:
-        json.dump(all_results, f, indent=2, ensure_ascii=False)
-
-    print(f"\nDone. Results saved to results_output.json")
+    print(f"\n✅ PROCESO FINALIZADO.")
+    print(f"📂 Resultados exportados a: {output_file}")
