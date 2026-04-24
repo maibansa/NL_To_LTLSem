@@ -1,0 +1,50 @@
+{
+  "LogSchemaOntology": {
+    "aActivity": {
+      "type": "atomic",
+      "description": "Identifier of the execution trace (case).",
+      "ltlRole": "propositionalAtom",
+      "requiresQuantification": false
+    },
+    "aActor": {
+      "type": "atomic",
+      "description": "Agent or role performing the event.",
+      "ltlRole": "propositionalAtom",
+      "requiresQuantification": false
+    },
+    "aActionType": {
+      "type": "atomic",
+      "description": "Type of action performed in the workflow.",
+      "ltlRole": "propositionalAtom",
+      "requiresQuantification": false
+    },
+    "aWorkflow": {
+      "type": "atomic",
+      "description": "Clinical process being executed.",
+      "ltlRole": "propositionalAtom",
+      "requiresQuantification": false
+    },
+    "nTimestamp": {
+      "type": "temporal",
+      "description": "Timestamp of the event execution.",
+      "ltlRole": "temporalDifference",
+      "requiresQuantification": true,
+      "arity": 2
+    },
+    "sModelReference": {
+      "type": "string",
+      "description": "URI identifying the event instance.",
+      "ltlRole": "eventFilter",
+      "requiresQuantification": true,
+      "arity": 1
+    },
+    "gSnomed": {
+      "type": "graph",
+      "description": "Clinical concept associated with the event.",
+      "ltlRole": "semanticPredicate",
+      "requiresQuantification": true,
+      "allowedArities": [1, 2, 3],
+      "semanticBackend": "SPARQL"
+    }
+  }
+}
