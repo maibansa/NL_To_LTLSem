@@ -60,20 +60,15 @@ PRINCIPIOS DE DISEÑO
 - No se fuerza precisión cuando el IR es vago.
 - El grounding es trazable, jerárquico y verificable.
 """
-
-
-
-
+# coding: utf-8
 import json
 import requests
 from rdflib import Graph, Namespace, URIRef
 from typing import Optional, List
-import re   # <-- añadido solo para normalizar nombres de función
 
 # ============================================================
 # 0. CONFIGURACIÓN
 # ============================================================
-
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "llama3"
 API_KEY = "21f105af-409c-4ea7-b978-23fdfbaf522c"
@@ -89,7 +84,7 @@ local_ontology = Graph()
 local_ontology.parse(ONTOLOGY_PATH, format="turtle")
 
 # ============================================================
-# 1. BÚSQUEDA LOCAL
+# 1. BÚSQUEDA LOCAL (SIN CAMBIOS)
 # ============================================================
 
 def search_local(terms: List[str], role: Optional[str] = None) -> Optional[str]:
@@ -104,24 +99,27 @@ def search_local(terms: List[str], role: Optional[str] = None) -> Optional[str]:
     return None
 
 # ============================================================
-# 2. BIOPORTAL: CANDIDATOS + JERARQUÍA
+# 2. NUEVO BLOQUE: BIOPORTAL (CANDIDATOS + JERARQUÍA)
 # ============================================================
 
 def get_bioportal_candidates(term: str) -> List[dict]:
     candidates = []
+
     try:
-        url = f"{BASE_URL}/search"
+        search_url = f"{BASE_URL}/search"
         params = {
             "q": term,
             "ontologies": "SNOMEDCT",
             "apikey": API_KEY,
             "pagesize": 5,
         }
-        resp = requests.get(url, params=params, timeout=10).json()
+
+        resp = requests.get(search_url, params=params, timeout=10).json()
 
         for item in resp.get("collection", []):
             iri = item.get("@id")
             cid = iri.split("/")[-1]
+
             parents = []
             try:
                 parents_url = (
@@ -131,23 +129,27 @@ def get_bioportal_candidates(term: str) -> List[dict]:
                 parents_resp = requests.get(
                     parents_url, params={"apikey": API_KEY}, timeout=10
                 ).json()
+
                 parents = [p.get("prefLabel") for p in parents_resp if "prefLabel" in p]
             except Exception:
                 pass
 
-            candidates.append({
-                "id": cid,
-                "prefLabel": item.get("prefLabel"),
-                "synonyms": item.get("synonym", []),
-                "parents": parents,
-            })
+            candidates.append(
+                {
+                    "id": cid,
+                    "prefLabel": item.get("prefLabel"),
+                    "synonyms": item.get("synonym", []),
+                    "parents": parents,
+                }
+            )
+
     except Exception as e:
         print(f"[ERROR] BioPortal: {e}")
 
     return candidates
 
 # ============================================================
-# 3. OLLAMA: SELECCIÓN FORZADA
+# 3. NUEVO BLOQUE: OLLAMA (SELECCIÓN FORZADA)
 # ============================================================
 
 def select_best_concept_with_ollama(
@@ -155,67 +157,76 @@ def select_best_concept_with_ollama(
     sentence: str,
     candidates: List[dict],
 ) -> Optional[str]:
+
     if not candidates:
         return None
 
     options = "\n".join(
-        f"- ID: {c['id']} | Label: {c['prefLabel']} | Parents: {c['parents']}"
-        for c in candidates
+        [
+            f"- ID: {c['id']} | Label: {c['prefLabel']} | Parents: {c['parents']}"
+            for c in candidates
+        ]
     )
 
-    prompt = (
-        "You are performing clinical ontology grounding.\n\n"
-        f"Original concept: \"{original_concept}\"\n"
-        f"Sentence context: \"{sentence}\"\n\n"
-        "SNOMED CT candidate concepts:\n"
-        f"{options}\n\n"
-        "Rules:\n"
-        "- Select ONE concept ID from the list\n"
-        "- If the concept is vague or unspecified, choose the MOST GENERAL clinically valid concept\n"
-        "- Do NOT invent IDs\n"
-        "- Respond ONLY with the Concept ID\n"
-    )
+    prompt = f"""
+You are performing clinical ontology grounding.
+
+Original concept: "{original_concept}"
+Sentence context: "{sentence}"
+
+SNOMED CT candidate concepts:
+{options}
+
+Rules:
+- Select ONE concept ID from the list
+- If the concept is vague or unspecified, choose the MOST GENERAL clinically valid concept
+- Do NOT invent IDs
+- Respond ONLY with the Concept ID
+"""
 
     try:
         resp = requests.post(
             OLLAMA_URL,
-            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
+            json={
+                "model": OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False,
+            },
             timeout=20,
         )
         return resp.json().get("response", "").strip()
-    except Exception:
+
+    except Exception as e:
+        print(f"[AVISO] Ollama no disponible: {e}")
         return None
 
 # ============================================================
-# 4. GENERACIÓN DE ASK
+# 4. GENERACIÓN DE ASK (SIN CAMBIOS)
 # ============================================================
 
 def generate_smart_ask(concept_id: str, role: str) -> str:
-    relation = "hasCondition" if "condition" in role.lower() else "executes"
     uri = SNOMED_NS[concept_id]
+    relation = "hasCondition" if "condition" in role.lower() else "executes"
+
     has_subclasses = (None, RDFS_SUBCLASS, uri) in local_ontology
 
     if has_subclasses:
-        return f"""
-PREFIX snomed: &lt;http://snomed.info/id/&gt;
-PREFIX rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
-PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
-
-ASK {{
-    ?patient snomed:{relation}/(rdfs:subClassOf|skos:broader)* snomed:{concept_id} .
-}}
-"""
+        query = f"""
+        ASK {{
+            ?patient snomed:{relation}/(rdfs:subClassOf|skos:broader)* snomed:{concept_id} .
+        }}
+        """
     else:
-        return f"""
-PREFIX snomed: &lt;http://snomed.info/id/&gt;
+        query = f"""
+        ASK {{
+            ?patient snomed:{relation} snomed:{concept_id} .
+        }}
+        """
 
-ASK {{
-    ?patient snomed:{relation} snomed:{concept_id} .
-}}
-"""
+    return " ".join(query.split())
 
 # ============================================================
-# 5. CARGA JSON
+# 5. CARGA DE resultado.json
 # ============================================================
 
 print(f"[INFO] Cargando ejemplos desde {INPUT_JSON}...")
@@ -223,14 +234,17 @@ with open(INPUT_JSON, "r", encoding="utf-8") as f:
     json_examples = json.load(f)
 
 final_output = []
-generated_functions = []
 
 # ============================================================
-# 6. EJECUCIÓN
+# 6. EJECUCIÓN (ÚNICO CAMBIO REAL AQUÍ)
 # ============================================================
 
 for item in json_examples:
+    ex_id = item.get("id")
     sentence = item.get("sentence", "")
+    print(f"--- Ejemplo {ex_id} ---")
+
+    processed_props = []
     propositions = item.get("ir", {}).get("propositions", [])
 
     for prop in propositions:
@@ -238,33 +252,30 @@ for item in json_examples:
             continue
 
         candidates = get_bioportal_candidates(prop["concept"])
-        cid = select_best_concept_with_ollama(prop["concept"], sentence, candidates)
+        cid = select_best_concept_with_ollama(
+            prop["concept"], sentence, candidates
+        )
 
         if cid:
             query = generate_smart_ask(cid, prop["role"])
+            prop["snomed_id"] = cid
+            prop["sparql_ask"] = query
 
-            # ✅ CAMBIO 2: imprimir ASK por pantalla
-            
-            print("\nFrase original:")
-            print(sentence)
+            tipo = "JERÁRQUICA" if "*" in query else "DIRECTA"
+            print(f"  {prop['concept']} → {cid} ({tipo})")
+            print(f"  >> {query}")
 
-            print("\nASK generado:")
-            print(query)
-            print("-" * 60)
+            processed_props.append(prop)
+        else:
+            print(f"  [ERROR] No se pudo mapear '{prop['concept']}'")
 
-            # ✅ CAMBIO 1: nombre de función SIN PROP_
-            raw_name = prop["concept"].lower().strip()
-            raw_name = re.sub(r"\s+", "_", raw_name)
-            raw_name = re.sub(r"[^a-z0-9_]", "", raw_name)
-            func_name = raw_name
-
-            generated_functions.append(f"""
-def {func_name}(g1):
-    q = f\"\"\"
-{query}
-    \"\"\"
-    return ask_query(q)
-""")
+    final_output.append(
+        {
+            "id": ex_id,
+            "graph_propositions": processed_props,
+        }
+    )
+    print()
 
 # ============================================================
 # 7. GUARDAR RESULTADOS
@@ -273,22 +284,4 @@ def {func_name}(g1):
 with open("step2_results.json", "w", encoding="utf-8") as f:
     json.dump(final_output, f, indent=2, ensure_ascii=False)
 
-# ============================================================
-# 8. GENERAR my_propositions.py
-# ============================================================
-
-with open("my_propositions.py", "w", encoding="utf-8") as f:
-    f.write("""import sys
-from pyoxigraph import Store
-import time
-
-DB_PATH = "test/snomed/GeneradorSynthea/auto/log_1000_61_80"
-store = Store(DB_PATH)
-
-def ask_query(q):
-    return bool(store.query(q))
-""")
-    for fn in generated_functions:
-        f.write(fn)
-
-print("[OK] step2_results.json y my_propositions.py generados")
+print("[OK] step2_results.json generado")

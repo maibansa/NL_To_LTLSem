@@ -49,7 +49,7 @@
         }
       ]
     },
-    "ltl": "G x.(PROP.gSnomed(x) -> F y.(glucose_test & (y[morning] - x[morning]) <= 86400))"
+    "ltl": "G x.(PROP.diabetes(x) -> F y.(glucose_test & (y[morning] - x[morning]) <= 86400))"
   },
   {
     "id": 3,
@@ -68,14 +68,14 @@
           "role": "condition"
         },
         {
-          "predicate": "aActivity",
+          "predicate": "aActionType",
           "type": "atomic",
-          "concept": "paracetamol administration",
+          "concept": "paracetamol",
           "role": "action"
         }
       ]
     },
-    "ltl": "G x.(PROP.gSnomed(x) -> F y.(paracetamol_administration))"
+    "ltl": "G x.(PROP.fever(x) -> F y.(paracetamol))"
   },
   {
     "id": 4,
@@ -104,142 +104,6 @@
         }
       ]
     },
-    "ltl": "G x.(PROP.gSnomed(x) -> X F y.(amlodipine & (y[nTimestamp] - x[nTimestamp]) <= 14400))"
-  },
-  {
-    "id": 5,
-    "sentence": "If an allergy is detected, epinephrine must be administered within 5 minutes.",
-    "ir": {
-      "temporalStructure": {
-        "operator": "tWithin",
-        "bound": {
-          "value": 5.0,
-          "unit": "minutes"
-        },
-        "anchorField": "nTimestamp"
-      },
-      "propositions": [
-        {
-          "predicate": "gSnomed",
-          "type": "graph",
-          "concept": "allergy",
-          "role": "condition"
-        },
-        {
-          "predicate": "aActionType",
-          "type": "atomic",
-          "concept": "epinephrine",
-          "role": "action"
-        }
-      ]
-    },
-    "ltl": "G x.(PROP.gSnomed(x) -> X F y.(epinephrine & (y[nTimestamp] - x[nTimestamp]) <= 300))"
-  },
-  {
-    "id": 6,
-    "sentence": "If a patient reports pain, they should eventually receive analgesia.",
-    "ir": {
-      "temporalStructure": {
-        "operator": "tEventually",
-        "bound": null,
-        "anchorField": "nTimestamp"
-      },
-      "propositions": [
-        {
-          "predicate": "gSnomed",
-          "type": "graph",
-          "concept": "pain",
-          "role": "condition"
-        },
-        {
-          "predicate": "aActionType",
-          "type": "atomic",
-          "concept": "analgesia",
-          "role": "action"
-        }
-      ]
-    },
-    "ltl": "G x.(PROP.gSnomed(x) -> F y.(analgesia))"
-  },
-  {
-    "id": 7,
-    "sentence": "If a patient is in the ICU, monitoring must always be active.",
-    "ir": {
-      "temporalStructure": {
-        "operator": "tAlways",
-        "bound": null,
-        "anchorField": "nTimestamp"
-      },
-      "propositions": [
-        {
-          "predicate": "gSnomed",
-          "type": "graph",
-          "concept": "ICU",
-          "role": "condition"
-        },
-        {
-          "predicate": "aActivity",
-          "type": "atomic",
-          "concept": "monitoring",
-          "role": "action"
-        }
-      ]
-    },
-    "ltl": "G x.(PROP.gSnomed(x) -> monitoring)"
-  },
-  {
-    "id": 8,
-    "sentence": "If oxygen saturation drops, supplemental oxygen must be provided within 10 minutes.",
-    "ir": {
-      "temporalStructure": {
-        "operator": "tWithin",
-        "bound": {
-          "value": 600.0,
-          "unit": "seconds"
-        },
-        "anchorField": "nTimestamp"
-      },
-      "propositions": [
-        {
-          "predicate": "gSnomed",
-          "type": "graph",
-          "concept": "oxygen saturation drops",
-          "role": "condition"
-        },
-        {
-          "predicate": "aActivity",
-          "type": "atomic",
-          "concept": "supplemental oxygen must be provided",
-          "role": "action"
-        }
-      ]
-    },
-    "ltl": "G x.(PROP.gSnomed(x) -> X F y.(supplemental_oxygen_must_be_provided & (y[nTimestamp] - x[nTimestamp]) <= 600))"
-  },
-  {
-    "id": 10,
-    "sentence": "If a laboratory result is abnormal, a follow-up test should eventually be performed.",
-    "ir": {
-      "temporalStructure": {
-        "operator": "tEventually",
-        "bound": null,
-        "anchorField": "nTimestamp"
-      },
-      "propositions": [
-        {
-          "predicate": "gSnomed",
-          "type": "graph",
-          "concept": "abnormal laboratory result",
-          "role": "condition"
-        },
-        {
-          "predicate": "aActivity",
-          "type": "atomic",
-          "concept": "follow-up test",
-          "role": "action"
-        }
-      ]
-    },
-    "ltl": "G x.(PROP.gSnomed(x) -> F y.(follow-up_test))"
+    "ltl": "G x.(PROP.hypertension(x) -> X F y.(amlodipine & (y[nTimestamp] - x[nTimestamp]) <= 14400))"
   }
 ]

@@ -1,3 +1,138 @@
+"""
+SISTEMA DE ALINEACIÓN SEMÁNTICA ENTRE REGLAS CLÍNICAS Y LOGS DE EJECUCIÓN
+
+====================================================================
+DESCRIPCIÓN GENERAL
+====================================================================
+
+Este script implementa un proceso de alineación semántica entre:
+- reglas clínicas previamente extraídas (en formato JSON),
+- y los valores reales observados en un log de ejecución (.mod).
+
+El objetivo es asegurar que los conceptos semánticos utilizados en
+las reglas (IR) coincidan exactamente con los actores y actividades
+que aparecen en los datos reales del sistema, evitando incoherencias
+entre el modelo lógico y el log.
+
+El modelo de lenguaje (LLM, vía Ollama) se utiliza únicamente como
+mecanismo de selección guiada entre alternativas existentes,
+nunca como generador de nuevos conceptos.
+
+====================================================================
+OBJETIVO
+====================================================================
+
+El propósito principal del script es:
+- alinear los valores de los predicados aActor y aActivity de las reglas,
+- con los actores y actividades realmente presentes en el log,
+- garantizando que todas las reglas puedan evaluarse sobre los datos.
+
+El sistema evita:
+- inventar actores o actividades inexistentes,
+- modificar reglas que ya están correctamente alineadas,
+- y realizar inferencias no justificadas por el log.
+
+====================================================================
+ENTRADAS PRINCIPALES
+====================================================================
+
+El script trabaja con tres ficheros principales:
+
+1. LOG_MOD_FILE (.mod)
+   Fichero de log de ejecución que contiene, entre otros campos:
+   - identificadores de actividades
+   - identificadores de actores
+
+2. RULES_JSON
+   Fichero JSON que contiene las reglas clínicas ya procesadas,
+   incluyendo:
+   - frase original,
+   - IR con proposiciones (predicate, concept, role),
+   - operadores temporales.
+
+3. OUTPUT_JSON
+   Fichero de salida donde se guardarán las reglas alineadas.
+
+====================================================================
+EXTRACCIÓN DE CONOCIMIENTO DEL LOG
+====================================================================
+
+A partir del fichero de log (.mod), el script extrae:
+
+- ACTIVIDADES:
+  Se obtienen de la segunda columna del log, tomando el primer campo
+  antes del primer separador '&'.
+
+- ACTORES:
+  Se obtienen también de la segunda columna del log, tomando el tercer
+  campo separado por '&'.
+
+Los valores extraídos se consideran:
+- el conjunto cerrado y autorizado de actores,
+- y el conjunto cerrado y autorizado de actividades.
+
+Estos conjuntos definen el espacio de alineación permitido.
+
+====================================================================
+USO DEL MODELO DE LENGUAJE (OLLAMA)
+====================================================================
+
+El LLM se utiliza exclusivamente como selector entre opciones válidas.
+
+Para cada concepto NO alineado:
+- se construye un prompt con:
+  - la frase clínica original,
+  - el concepto actual de la regla,
+  - la lista cerrada de actores o actividades válidos.
+- el modelo debe devolver estrictamente un JSON con UNA selección.
+
+El script valida siempre que:
+- el valor devuelto pertenezca exactamente al conjunto permitido,
+- en caso contrario, el alineamiento se descarta.
+
+====================================================================
+PROCESO DE ALINEACIÓN
+====================================================================
+
+Para cada regla del fichero JSON:
+
+1. Se recorren primero las proposiciones con predicado aActor:
+   - Si el actor ya aparece en el log, no se modifica.
+   - Si no aparece, se intenta alinear mediante Ollama.
+   - Si la selección es válida, se actualiza el concepto.
+   - Si no, se mantiene el valor original.
+
+2. Posteriormente se recorren las proposiciones con predicado aActivity:
+   - Se aplica exactamente el mismo proceso de validación y alineación.
+
+El proceso distingue explícitamente entre actores y actividades y
+nunca los mezcla.
+
+====================================================================
+SALIDA
+====================================================================
+
+El resultado final es un nuevo fichero JSON que contiene:
+- las reglas originales,
+- con los conceptos aActor y aActivity alineados cuando ha sido posible.
+
+Además, el sistema imprime por pantalla:
+- los actores y actividades extraídos del log,
+- las decisiones de alineación realizadas,
+- los casos en los que no se ha podido alinear un concepto.
+
+====================================================================
+PRINCIPIOS DE DISEÑO
+====================================================================
+
+- El log de ejecución es la fuente de verdad.
+- El LLM no inventa conceptos, solo elige entre valores existentes.
+- La alineación es explícita, trazable y reversible.
+- Las reglas válidas no se modifican innecesariamente.
+- El proceso es determinista salvo en la selección guiada.
+
+
+"""
 # coding: utf-8
 import json
 import os
