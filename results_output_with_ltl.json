@@ -20,7 +20,8 @@
         }
       ]
     },
-    "ltl": "G x.(TRUE -> F y.(Vital_signs_recording & (y[nTimestamp] - x[nTimestamp]) <= 14400))"
+    "ltl": "G x.(TRUE -> F y.(Vital_signs_recording & (y[nTimestamp] - x[nTimestamp]) <= 14400))",
+    "ltl_generated": "G x.(TRUE -> F y.(Vital_signs_recording & (y[nTimestamp] - x[nTimestamp]) <= 14400))"
   },
   {
     "id": 2,
@@ -49,7 +50,8 @@
         }
       ]
     },
-    "ltl": "G x.(PROP.diabetes(x) -> F y.(glucose_test & (y[nTimestamp] - x[nTimestamp]) <= 1))"
+    "ltl": "G x.(PROP.diabetes(x) -> F y.(glucose_test & (y[nTimestamp] - x[nTimestamp]) <= 1))",
+    "ltl_generated": "G x.(PROP.diabetes(x) -> F y.(glucose_test & (y[nTimestamp] - x[nTimestamp]) <= 1))"
   },
   {
     "id": 3,
@@ -78,7 +80,8 @@
         }
       ]
     },
-    "ltl": "G x.(PROP.fever(x) -> F y.(paracetamol))"
+    "ltl": "G x.(PROP.fever(x) -> F y.(paracetamol))",
+    "ltl_generated": "G x.(PROP.fever(x) -> F y.(paracetamol))"
   },
   {
     "id": 5,
@@ -107,7 +110,8 @@
         }
       ]
     },
-    "ltl": "G x.(PROP.allergy(x) -> X F y.(epinephrine_administration & (y[nTimestamp] - x[nTimestamp]) <= 300))"
+    "ltl": "G x.(PROP.allergy(x) -> X F y.(epinephrine_administration & (y[nTimestamp] - x[nTimestamp]) <= 300))",
+    "ltl_generated": "G x.(PROP.allergy(x) -> X F y.(epinephrine_administration & (y[nTimestamp] - x[nTimestamp]) <= 300))"
   },
   {
     "id": 6,
@@ -136,7 +140,8 @@
         }
       ]
     },
-    "ltl": "G x.(PROP.pain(x) -> F y.(analgesia))"
+    "ltl": "G x.(PROP.pain(x) -> F y.(analgesia))",
+    "ltl_generated": "G x.(PROP.pain(x) -> F y.(analgesia))"
   },
   {
     "id": 7,
@@ -171,64 +176,7 @@
         }
       ]
     },
-    "ltl": "G x.(patient & PROP.ICU(x) -> monitoring)"
-  },
-  {
-    "id": 9,
-    "sentence": "The patient should remain fasting until surgery is performed.",
-    "ir": {
-      "temporalStructure": {
-        "operator": "tUntil",
-        "bound": {
-          "value": 0.0,
-          "unit": "seconds"
-        },
-        "anchorField": "nTimestamp"
-      },
-      "propositions": [
-        {
-          "predicate": "gSnomed",
-          "type": "graph",
-          "concept": "surgery",
-          "role": "condition"
-        },
-        {
-          "predicate": "aActivity",
-          "type": "atomic",
-          "concept": "surgery",
-          "role": "action"
-        }
-      ]
-    },
-    "ltl": "(PROP.surgery(x) U surgery)"
-  },
-  {
-    "id": 10,
-    "sentence": "If a laboratory result is abnormal, a follow-up test should eventually be performed.",
-    "ir": {
-      "temporalStructure": {
-        "operator": "tEventually",
-        "bound": {
-          "value": 3600.0,
-          "unit": "seconds"
-        },
-        "anchorField": "nTimestamp"
-      },
-      "propositions": [
-        {
-          "predicate": "gSnomed",
-          "type": "graph",
-          "concept": "Abnormal laboratory result",
-          "role": "condition"
-        },
-        {
-          "predicate": "aActivity",
-          "type": "atomic",
-          "concept": "Follow-up test",
-          "role": "action"
-        }
-      ]
-    },
-    "ltl": "G x.(PROP.Abnormal_laboratory_result(x) -> F y.(Follow-up_test))"
+    "ltl": "G x.(patient & PROP.ICU(x) -> monitoring)",
+    "ltl_generated": "G x.(patient & PROP.ICU(x) -> monitoring)"
   }
 ]

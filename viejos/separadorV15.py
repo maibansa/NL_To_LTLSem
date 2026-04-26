@@ -32,11 +32,8 @@ El objetivo es obtener reglas clínicas formalizadas de forma:
 evitando:
 - inferencias clínicas implícitas,
 - creación de predicados inventados,
-- conversiones temporales implícitas no controladas,
+- conversiones automáticas de unidades temporales,
 - y mezclas indebidas entre semántica y temporalidad.
-
-NOTA: En la IR, los límites temporales se normalizan a segundos
-(value en segundos, unit="seconds") para garantizar consistencia.
 
 ====================================================================
 ENTRADAS PRINCIPALES
@@ -53,7 +50,7 @@ El sistema opera sobre:
 
    - LTL Ontology (ltlonto.json):
      Define los operadores temporales formales (tEvery, tWithin,
-     tUntil, tAlways, tEventually, etc.) y su correspondencia con patrones lógicos.
+     tUntil, tAlways, etc.) y su correspondencia con patrones lógicos.
 
 Estas ontologías restringen explícitamente el espacio de salida
 del sistema.
@@ -67,7 +64,7 @@ y consta de dos componentes principales:
 
 1. TemporalStructure:
    - operator: operador temporal formal (de la LTL Ontology)
-   - bound: límite temporal opcional (value en segundos, unit="seconds")
+   - bound: límite temporal opcional (valor + unidad literal)
    - anchorField: campo temporal de referencia (ej. nTimestamp)
 
 2. Propositions:
@@ -84,14 +81,60 @@ no se mezclen en una misma capa.
 PASO 1 – EXTRACCIÓN DE LA IR (LLM + ONTOLOGÍAS)
 ====================================================================
 
-El Paso 1 transforma una frase clínica en una IR estructurada.
+El Paso 1 transforma una frase clínica en una IR estructurada:
+
+1. Se construye un prompt altamente restrictivo que:
+   - impone una arquitectura de dos capas (temporal vs semántica),
+   - prohíbe la invención de operadores o predicados,
+   - exige el uso exclusivo de ontologías,
+   - y define un formato JSON estricto de salida.
+
+2. El prompt se envía al modelo LLM (Ollama).
+3. La salida se limpia, parsea y valida contra los modelos Pydantic.
+
+Si la salida no es válida, la frase se descarta.
+
+El resultado es una IR ontológicamente consistente y estructuralmente
+válida.
 
 ====================================================================
 PASO 2 – TRADUCCIÓN DE IR A LTL/DLTL
 ====================================================================
 
-Este paso genera una fórmula lógica temporal a partir de la IR,
-mediante plantillas deterministas.
+Este paso genera una fórmula lógica temporal a partir de la IR.
+
+Se divide conceptualmente en dos fases:
+
+1. Renderizado de proposiciones:
+   - Cada proposición individual se traduce a una expresión lógica
+     elemental, dependiendo de su tipo ontológico.
+   - No se introducen operadores temporales en esta fase.
+
+2. Composición temporal:
+   - Las proposiciones de condición y acción se organizan mediante
+     plantillas LTL predefinidas.
+   - Se utilizan operadores DLTL.
+   - Las restricciones temporales se introducen solo si están
+     explícitamente presentes en la IR.
+
+El resultado es una fórmula LTL/DLTL explícita y trazable.
+
+====================================================================
+EJECUCIÓN Y SALIDA
+====================================================================
+
+En el bloque principal:
+- Se procesan todas las frases de entrada.
+- Se imprime por pantalla la IR generada y la fórmula LTL resultante.
+- Se guardan los resultados incrementalmente en results_output.json,
+  incluyendo:
+    - id,
+    - frase original,
+    - IR completa,
+    - fórmula LTL/DLTL generada.
+
+El guardado incremental evita la pérdida de resultados en ejecuciones
+largas.
 
 ====================================================================
 PRINCIPIOS DE DISEÑO
@@ -99,9 +142,11 @@ PRINCIPIOS DE DISEÑO
 
 - Separación estricta de capas (semántica vs temporalidad).
 - Ontologías como fuente de verdad.
-- Uso del LLM como extractor/selector, no como razonador libre.
+- Uso del LLM como extractor, no como razonador.
 - Validación estructural explícita.
 - Trazabilidad completa NL → IR → LTL.
+
+
 """
 # coding: utf-8
 
@@ -135,7 +180,7 @@ TEST_SENTENCES = [
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "llama3"
 LOG_ONTOLOGY_FILE = "logonto.json"
-LTL_ONTOLOGY_FILE = "ltlonto.json"
+LTL_ONTOLOGY_FILE = "ltlonto.json" 
 OLLAMA_TIMEOUT = 300
 
 # ============================================================
@@ -154,13 +199,13 @@ class TemporalStructure(BaseModel):
     @field_validator("operator")
     @classmethod
     def validate_operator(cls, v):
-        # Permitimos validación externa (ontología / prompt). Aquí no bloqueamos.
+        # Se permite el mapeo dinámico a las tKeys de la ontología lógica
         return v
 
 class Proposition(BaseModel):
     predicate: str
-    type: str
-    concept: str
+    type: str  # <-
+    concept: str    
     role: str   # condition | action | state
 
 class Step1IR(BaseModel):
@@ -180,48 +225,41 @@ def load_ontology(path: str) -> Dict:
 # ============================================================
 
 def build_prompt(text: str, log_ontology: Dict, ltl_ontology: Dict) -> str:
-    onto_semantic = json.dumps(log_ontology, indent=2, ensure_ascii=False)
-    onto_logic = json.dumps(ltl_ontology, indent=2, ensure_ascii=False)
-
-    # IMPORTANT: restrict operators to what step15_to_ltl supports
-    supported_ops = "tEvery, tWithin, tEventually, tAlways, tUntil"
-
+    onto_semantic = json.dumps(log_ontology, indent=2)
+    onto_logic = json.dumps(ltl_ontology, indent=2)
+    
     return f"""
-Act as a Clinical Rule Compiler.
+Act as a Clinical Rule Compiler. 
 
 ==================================================================
 CRITICAL ARCHITECTURAL REQUIREMENT: DUAL-LAYER SEPARATION
 ==================================================================
 You MUST strictly separate the extraction into two independent layers before generating the JSON:
 
-1) THE TEMPORAL LOGIC LAYER (The "When"):
-   The 'operator' MUST be EXACTLY one of: {supported_ops}
-   Do NOT output any other operator (e.g., tObligation_release).
+1. THE TEMPORAL LOGIC LAYER (The "When"): 
+   Determines the formal structure of the rule. You MUST use the LOG ONTOLOGY to identify the operator, type of operator and its logic pattern.
+   The 'operator' in the output MUST be one of the keys from LtlLogicOntology (e.g., tEvery, tWithin, tUntil, tAlways, tOnce, etc.).
 
-2) THE DOMAIN SEMANTIC LAYER (The "What"):
-   You MUST use LogSchemaOntology to choose predicates and roles.
+2. THE DOMAIN SEMANTIC LAYER (The "What"): 
+   Identifies clinical concepts, tasks, and locations. You MUST use the 'LogSchemaOntology' to map predicates and roles.
 
-NEVER mix clinical concepts into temporalStructure, and NEVER mix temporal constraints into propositions.
+NEVER mix clinical concepts into the temporalStructure, and NEVER mix temporal constraints into the propositions.
 ==================================================================
 
 ==================================================================
 ANTI-HALLUCINATION PROTOCOL (STRICT COMPLIANCE)
 ==================================================================
-- SUPPORTED OPERATORS ONLY: operator MUST be one of {supported_ops}.
-- CANONICAL TIME NORMALIZATION (REQUIRED):
-  If a temporal bound is mentioned, convert it to seconds and output:
-  "unit": "seconds" and "value": <number_of_seconds>.
-  Examples: 4 hours -> 14400, 24 hours -> 86400, 5 minutes -> 300, 10 minutes -> 600, 1 day -> 86400.
-- NO INVENTED PREDICATES: Choose ONLY from keys in LogSchemaOntology (e.g., gSnomed, aActivity, aActionType, aActor, etc.).
-- NULL FOR ABSENT DATA: If no temporal bound is mentioned, bound MUST be null. Do NOT invent defaults.
-- ANCHOR FIELD: anchorField MUST ALWAYS be "nTimestamp" (never "morning" or any other non-log field).
+- NO CALCULATIONS: Do NOT convert time to seconds or minutes. Extract the literal value and unit from the text (e.g., "4 hours" -> value: 4, unit: "hours").
+- NO INVENTED OPERATORS: If the text says "within", you MUST use 'tWithin'. If it says "until", use 'tUntil'. Never use 'tUntil' for a time deadline.
+- NO INVENTED PREDICATES: You are strictly forbidden from creating new predicates. You MUST choose ONLY from the keys in LogSchemaOntology (e.g., gSnomed, aActivity, etc.).
+- NULL FOR ABSENT DATA: If no temporal bound is mentioned, "bound" MUST be null. Do NOT invent default values like 3600s.
 ==================================================================
 
 ### REFERENCE ONTOLOGIES
-1) LTL Ontology (operators):
+1. LOG ONTOLOGY (Structure & Operators):
 {onto_logic}
 
-2) Log Ontology (predicates, proposition types, roles):
+2. SEMANTIC ONTOLOGY (Clinical Concepts):
 {onto_semantic}
 
 ### OUTPUT FORMAT (STRICTLY FOLLOW THIS STRUCTURE)
@@ -229,14 +267,14 @@ Return ONLY valid JSON in the following structure:
 
 {{
   "temporalStructure": {{
-    "operator": "tEvery|tWithin|tEventually|tAlways|tUntil",
-    "bound": {{ "value": number, "unit": "seconds" }},
+    "operator": "tKey_from_LtlLogicOntology",
+    "bound": {{ "value": number, "unit": "seconds|minutes|hours|days" }},
     "anchorField": "nTimestamp"
   }},
   "propositions": [
     {{
-      "predicate": "identifier_from_LogSchemaOntology (e.g., gSnomed, aActivity, aActionType, aActor, etc.)",
-      "type": "the 'type' value associated with the predicate in LogSchemaOntology (e.g., graph, atomic, string, number, boolean)",
+      "predicate": "identifier_from_LogSchemaOntology (e.g., gSnomed, aActivity, etc.)",
+      "type": "the 'type' value associated with the predicate in LogSchemaOntology",(e.g., graph, atomic, string)",
       "concept": "IDENTIFIER",
       "role": "condition|action|state"
     }}
@@ -244,7 +282,7 @@ Return ONLY valid JSON in the following structure:
 }}
 
 ### CLINICAL RULE TO ANALYZE:
-\"{text}\"
+"{text}"
 """
 
 # ============================================================
@@ -275,16 +313,13 @@ def call_ollama(prompt: str) -> Optional[str]:
 
 def parse_step1_ir(llm_output: str) -> Optional[Step1IR]:
     try:
-        # Ollama with format=json usually returns clean JSON, but keep robust extraction
         start = llm_output.find("{")
         end = llm_output.rfind("}")
         raw = llm_output[start:end + 1]
-        raw = re.sub(r",\s*([}\]])", r"\1", raw)  # remove trailing commas
+        raw = re.sub(r",\s*([}\]])", r"\1", raw)
         data = json.loads(raw)
         return Step1IR(**data)
-    except (ValidationError, json.JSONDecodeError) as e:
-        # optional debug:
-        # print("PARSE/VALIDATION ERROR:", e)
+    except (ValidationError, json.JSONDecodeError):
         return None
 
 # ============================================================
@@ -304,30 +339,34 @@ def step1(text: str, log_ontology: Dict, ltl_ontology: Dict) -> Optional[Step1IR
 
 def proposition_to_ltl_placeholder(p: Proposition, var: str) -> str:
     """
-    Renderiza la proposición.
-    Usa el 'concept' con guiones bajos para tipos atomic, string, number y boolean.
+    Renderiza la proposición. 
+    Usa el 'concept' con guiones bajos para tipos atómicos, string, number y boolean.
     """
     p_type = p.type.lower().strip()
+    # Limpiamos el concepto para que sea un identificador válido (ej: "glucose test" -> "glucose_test")
     clean_concept = p.concept.replace(" ", "_")
-
-    # 1) graph: PROP.<concept>(var)
+    
+    # 1. Tipo 'graph': Mantiene la estructura PROP.predicate(var)
     if p_type == "graph":
+        # Nota: Aquí usamos el predicate como identificador según tu estructura original
+        #return f"PROP.{p.predicate}({var})"    
         concept_id = p.concept.strip().replace(" ", "_")
         return f"PROP.{concept_id}({var})"
 
-    # 2) string: var[predicate]=='value'
+    
+    # 2. Tipo 'string': var[predicate]=='concept_valor'
     elif p_type == "string":
         return f"{var}[{p.predicate}]=='{clean_concept}'"
-
-    # 3) number/boolean: var[predicate]==value
+    
+    # 3. Tipos 'number' o 'boolean': var[predicate]==valor
     elif p_type in ["number", "boolean"]:
         return f"{var}[{p.predicate}]=={clean_concept}"
-
-    # 4) atomic: concept
+    
+    # 4. Tipo 'atomic': Solo el concepto con guiones bajos
     elif p_type == "atomic":
         return f"{clean_concept}"
-
-    # fallback
+    
+    # Fallback
     return f"{clean_concept}({var})"
 
 def step15_to_ltl(ir: Step1IR) -> str:
@@ -344,23 +383,21 @@ def step15_to_ltl(ir: Step1IR) -> str:
     def get_seconds():
         if not t.bound:
             return None
-        # Policy B: IR already normalized to seconds
-        return int(t.bound.value)
+        mult = {"seconds": 1, "minutes": 60, "hours": 3600, "days": 86400, "day": 86400}
+        return int(t.bound.value * mult.get(t.bound.unit.lower(), 1))
 
     def time_diff(v_x, v_y):
         return f"({v_y}[{ts}] - {v_x}[{ts}])"
 
     def cond_ltl(var):
-        if not conds:
-            return "TRUE"
+        if not conds: return "TRUE"
         return " & ".join(proposition_to_ltl_placeholder(p, var) for p in conds)
 
     def act_ltl(var):
-        if not acts:
-            return "TRUE"
+        if not acts: return "TRUE"
         return " & ".join(proposition_to_ltl_placeholder(p, var) for p in acts)
 
-    op = (t.operator or "").lower()
+    op = t.operator.lower()
     seconds = get_seconds()
 
     # --- Lógica de Plantillas ---
@@ -391,7 +428,7 @@ def step15_to_ltl(ir: Step1IR) -> str:
 if __name__ == "__main__":
     print("\n🚀 INICIANDO SISTEMA DE TRADUCCIÓN CLÍNICA")
     print("=" * 70)
-
+    
     # Carga de recursos
     log_ontology = load_ontology(LOG_ONTOLOGY_FILE)
     ltl_ontology = load_ontology(LTL_ONTOLOGY_FILE)
@@ -400,12 +437,12 @@ if __name__ == "__main__":
 
     for i, sentence in enumerate(TEST_SENTENCES, start=1):
         print(f"\n📝 PROCESANDO [{i}/{len(TEST_SENTENCES)}]: {sentence}")
-
+        
         # 1. Ejecución del Modelo (IR)
         ir = step1(sentence, log_ontology, ltl_ontology)
 
         if ir is None:
-            print("   ❌ ERROR: El Paso 1 (LLM) no devolvió datos válidos.")
+            print("   ❌ ERROR: El Paso 1 (Ollama) no devolvió datos válidos.")
             continue
 
         # MOSTRAR JSON POR PANTALLA
@@ -427,14 +464,14 @@ if __name__ == "__main__":
             "id": i,
             "sentence": sentence,
             "ir": ir.model_dump(),
-            #"ltl": current_ltl
+            "ltl": current_ltl
         }
         all_results.append(result_item)
-
-        # Guardado incremental para no perder datos
+        
+        # Guardado incremental para no perder datos si la CPU se cuelga
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(all_results, f, indent=2, ensure_ascii=False)
-
+            
         print("-" * 70)
 
     print(f"\n✅ PROCESO FINALIZADO.")
