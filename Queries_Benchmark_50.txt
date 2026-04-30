@@ -1,0 +1,68 @@
+==================================================================
+CLINICAL RULE COMPILER BENCHMARK: 50 ADVANCED QUERIES (INC. SNOMED)
+==================================================================
+
+--- SEMANTIC & SNOMED CT INTEGRITY ---
+
+1. If 'Allergy_Unspecified' occurs, the event must contain a 'gSnomed' reference to the concept '419199007' (Allergy to substance).
+2. Whenever 'Administer_Allergy_Test' is executed, it must eventually be followed by a 'gSnomed' finding of either 'Atopy' (225944002) or 'Negative' (260385009).
+3. If 'Prescribe_Epipen' is called, the 'sModelReference' must strictly point to the SNOMED code for 'Epinephrine 0.3mg injection' (substance).
+4. A trace cannot contain a 'gSnomed' for 'Latex Allergy' (300916003) if the 'Allergist_Guard' recorded a 'False' outcome for environmental triggers.
+5. If 'Drug_Allergy_Incidence_Submodule' is active, any 'at_MedicationOrder' must have an attribute 'x[p]' containing a valid SNOMED hierarchy code for 'Antibiotics'.
+6. Every 'at_AllergyOnset' event must be linked to a 'gSnomed' concept representing a clinical manifestation (e.g., 'Urticaria' 64140007).
+7. If 'Potential_COPD_Smoker' is identified, the next state must include a 'gSnomed' code related to 'Tobacco smoking' (446041000011109).
+8. If the 'clinicalCode' in 'Allergy_Panel' is 'SCTID: 252325008', then the actor must be a 'Practitioner' with specialization in 'Immunology'.
+9. When 'Immunotherapy_Submodule' starts, the 'sModelReference' must match a SNOMED procedure code for 'Desensitization therapy'.
+10. If 'PROP.IS_SNOMED_CHILD(x[p], "373270004")' (Substance with penicillin-like structure) is true, then 'at_AllergyOnset' is mandatory.
+
+--- DATA CORRELATION & FREEZE OPERATOR (ADVANCED) ---
+
+11. Whenever an 'Allergy_Panel' is conducted (x), there must be a future event (y) where 'are_acceptable(x, y)' is true and the SNOMED codes match.
+12. If 'Administer_Allergy_Test' is performed by actor 'z', every 'at_Procedure' until 'Terminal' must also be performed by actor 'z'.
+13. If 'at_AllergyOnset' records 'allergen_id = A1', then 'Prescribe_Epipen' must occur with an attribute 'linked_allergen = A1'.
+14. Capture the 'age' during 'Age_Guard' (x); if 'x[age] < 12', then 'Prescribe_OTC_Antihistamine' must be limited to 'pediatric' dosage in the attributes.
+15. If 'Environmental_Allergy_Incidence_Submodule' starts (x), the next 'at_Delay' must have a duration exactly equal to 'x[min_wait_time]'.
+16. If 'Allergist_Initial_Visit' (x) occurs, 'End_Allergist_Initial_Visit' (y) must satisfy 'y[timestamp] - x[timestamp] < 3600'.
+17. The 'clinicalCode' of 'Allergy_Unspecified' must be stored in variable 'c' and remain constant for all 'at_MedicationOrder' in the trace.
+18. If 'No_Infection' is recorded, any previous 'gSnomed' code for 'Bacterial infection' must be marked as 'Inactive' in the current event's dictionary.
+19. If two 'at_Encounter' events occur, the 'practitioner_id' of the second must be different from the first to ensure a second opinion.
+20. In 'Food_Allergy_Incidence_Submodule', if 'x[p]["food_type"] == "peanuts"', then 'at_Guard' must trigger a 'High_Priority' flag.
+
+--- COMPLEX TEMPORAL LTL ---
+
+21. Always, if 'at_AllergyOnset' happens, the patient must be 'Atopic' within 7200 seconds or the care plan is void.
+22. After 'Allergist_Initial_Visit' starts, the patient must remain in the 'Encouter' state until 'at_EncounterEnd' is explicitly called.
+23. If 'Prescribe_Epipen' occurs, it must be the case that 'Administer_Allergy_Test' happened at least once since the last 'Initial' event.
+24. It is globally true that 'Delay_For_Atopy' cannot be followed by 'Not_Atopic' in the immediate next state.
+25. Once 'Living_With_Allergies' becomes true, it must stay true until 'Terminal' happens (No recovery path).
+26. If 'Delay_For_Allergist_Initial_Visit' happens, 'Allergist_Initial_Visit' must occur eventually, but not before 86400 seconds (24h).
+27. 'Initial' must be the first event (x) such that there is no previous event (Y false).
+28. If 'Immunotherapy_Submodule' is called, it must be preceded by 'Allergy_Panel' within a window of exactly 30 days (2592000s).
+29. If 'Potential_COPD_Nonsmoker' occurs, then 'Potential_COPD_Smoker' must never have happened in the past for this trace.
+30. Every 'at_Simple' recording (vital signs) must be followed by another 'at_Simple' within 14400 seconds, unless 'Terminal' is reached.
+
+--- WORKFLOW & ACTOR CONSTRAINTS ---
+
+31. If 'Allergist_Guard' is false, the 'allergies' workflow must jump directly to 'General_Allergy_CarePlan' in the next state.
+32. Only a 'Pharmacist' can execute an event with 'at_ActionType = at_MedicationOrder'.
+33. A 'Radiologist' must not participate in any 'Allergy_Unspecified' related activities.
+34. If 'Clinical_System' triggers 'Age_Guard', the 'result' attribute must be 'boolean' and not 'string'.
+35. The 'copd' workflow must always contain a 'Potential_COPD_Smoker' or 'Potential_COPD_Nonsmoker' activity before 'Terminal'.
+36. If 'at_CallSubmodule' is called for 'Drug_Allergy', then 'at_CarePlanStart' must not happen in the next 3 states.
+37. 'End_Allergist_Initial_Visit' must be performed by the same 'Physician' who started the visit.
+38. In 'fibromyalgia' workflow, 'Initial' must be followed by at least three 'at_Simple' events before any diagnosis.
+39. If 'Care_Manager' is the actor, the activity must be 'General_Allergy_CarePlan' or 'Delay_For_Atopy'.
+40. Any 'at_Procedure' with a 'cost > 500' must be authorized by a 'Practitioner' and not by the 'Clinical_System'.
+
+--- SYSTEM INTEGRITY & ERROR STATES ---
+
+41. If 'x[#] > 100', the trace is too long and must trigger a 'Terminal' state within the next 5 events.
+42. If 'at_Delay' duration is negative, the system must transition to 'Terminal' and flag a data error.
+43. A trace is invalid if it contains 'Female' and the SNOMED code for 'Prostate Cancer' (simultaneous).
+44. If 'sModelReference' is null, the 'at_ActionType' cannot be 'at_Procedure'.
+45. Every 'at_Encounter' must have a 'room_number' attribute that is a 'number' between 1 and 500.
+46. If 'x[V] == 0' (vital sign zero), the 'at_Simple' activity must be followed by an emergency 'at_CallSubmodule'.
+47. If 'at_Initial' is not followed by any other activity, the 'Terminal' event must be executed by 'Clinical_System'.
+48. Any 'gSnomed' concept under the '363787002' (Observable entity) hierarchy must have a 'unit' attribute (e.g., 'mmHg').
+49. If 'Allergy_Panel' results in 'Atopic', the 'atopy_index' attribute must be greater than 0.75.
+50. If the 'workflow' is 'dermatitis', the activity 'Prescribe_Epipen' is strictly forbidden.

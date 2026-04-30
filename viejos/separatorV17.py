@@ -48,7 +48,7 @@ El sistema opera sobre:
 
    - Log Ontology (logonto.json):
      Define los predicados permitidos, los tipos de proposición
-     (graph, atomic, string, number, boolean) 
+     (graph, atomic, string, number, boolean) y los roles semánticos
      (condition, action, state).
 
    - LTL Ontology (ltlonto.json):
@@ -75,7 +75,7 @@ y consta de dos componentes principales:
    - predicate: identificador de la Log Ontology
    - type: tipo ontológico de la proposición
    - concept: concepto clínico textual
-
+   - role: role semántico (condition, action o state)
 
 La IR garantiza que la semántica clínica y la estructura temporal
 no se mezclen en una misma capa.
@@ -147,8 +147,6 @@ OLLAMA_TIMEOUT = 300
 # MODELS
 # ============================================================
 
-from typing import Union
-
 class TemporalBound(BaseModel):
     value: float
     unit: str
@@ -161,32 +159,17 @@ class TemporalStructure(BaseModel):
     @field_validator("operator")
     @classmethod
     def validate_operator(cls, v):
+        # Permitimos validación externa (ontología / prompt). Aquí no bloqueamos.
         return v
 
-
-# 🔹 NUEVO
-class LogicalNode(BaseModel):
-    type: str  # and | or | not | implies
-    args: Optional[List[Union[str, "LogicalNode"]]] = None  # Para and/or
-    arg: Optional[Union[str, "LogicalNode"]] = None         # Para not (LLM friendly)
-    if_: Optional[Union[str, "LogicalNode"]] = None        # Para implies (LLM friendly)
-    then: Optional[Union[str, "LogicalNode"]] = None       # Para implies (LLM friendly)
-
-LogicalNode.model_rebuild()
-
-
 class Proposition(BaseModel):
-    id: str
     predicate: str
     type: str
     concept: str
-  
+    role: str   # condition | action | state
 
-
-# 🔁 MODIFICADO
 class Step1IR(BaseModel):
     temporalStructure: TemporalStructure
-    logicalStructure: Union[str, LogicalNode]  # 🔥 Permite que sea un ID directo "p1"
     propositions: List[Proposition]
 
 # ============================================================
@@ -205,34 +188,23 @@ def build_prompt(text: str, log_ontology: Dict, ltl_ontology: Dict) -> str:
     onto_semantic = json.dumps(log_ontology, indent=2, ensure_ascii=False)
     onto_logic = json.dumps(ltl_ontology, indent=2, ensure_ascii=False)
 
-
     # IMPORTANT: restrict operators to what step15_to_ltl supports
-    supported_ops = "tAlways, tEventually, tNext, tUntil,  tHistorical, tOnce, tPrevious, tSince"
+    supported_ops = "tEvery, tWithin, tEventually, tAlways, tUntil"
 
     return f"""
 Act as a Clinical Rule Compiler.
 
 ==================================================================
-CRITICAL ARCHITECTURAL REQUIREMENT: THREE-LAYER SEPARATION
+CRITICAL ARCHITECTURAL REQUIREMENT: DUAL-LAYER SEPARATION
 ==================================================================
-You MUST strictly separate the extraction into three independent layers before generating the JSON:
+You MUST strictly separate the extraction into two independent layers before generating the JSON:
 
 1) THE TEMPORAL LOGIC LAYER (The "When"):
    The 'operator' MUST be EXACTLY one of: {supported_ops}
-   Reference LTL Ontology
+   Do NOT output any other operator (e.g., tObligation_release).
 
 2) THE DOMAIN SEMANTIC LAYER (The "What"):
-   You MUST use LogSchemaOntology to choose predicates.
-   
-3) THE LOGICAL STRUCTURE LAYER (The "How"):
-  You MUST represent the logical structure of propositions using ONLY the following patterns:
-   - Single proposition: "logicalStructure": "<proposition_id>"
-   - AND/OR/EQUIVALENT: "logicalStructure": {{"type": "and|or", "args": [proposition_id1, proposition_id2, ...]}}
-   - NOT: "logicalStructure": {{"type": "not", "arg": proposition_id}}
-   - IMPLIES: "logicalStructure": {{"type": "implies", "if_": proposition_id1, "then": proposition_id2}}  
- 
-
-==================================================================
+   You MUST use LogSchemaOntology to choose predicates and roles.
 
 NEVER mix clinical concepts into temporalStructure, and NEVER mix temporal constraints into propositions.
 ==================================================================
@@ -251,45 +223,35 @@ ANTI-HALLUCINATION PROTOCOL (STRICT COMPLIANCE)
 ==================================================================
 
 ### REFERENCE ONTOLOGIES
-#1) LTL Ontology:
+1) LTL Ontology (operators):
 {onto_logic}
 
-#2) Log Ontology:
+2) Log Ontology (predicates, proposition types, roles):
 {onto_semantic}
 
-Return ONLY valid JSON.
+### OUTPUT FORMAT (STRICTLY FOLLOW THIS STRUCTURE)
+Return ONLY valid JSON in the following structure:
 
 {{
   "temporalStructure": {{
-    "operator": "tEvery",
-    "bound": null OR {{ "value": , "unit": "seconds" }},
+    "operator": "tEvery|tWithin|tEventually|tAlways|tUntil",
+    "bound": {{ "value": number, "unit": "seconds" }}| null,
     "anchorField": "nTimestamp"
   }},
- 
-
   "propositions": [
     {{
-      "id": "p1",
-      "predicate": "gSnomed | aActivity | aActionType | aWorkflow | aActor | sModelReference",
-      "type": "graph | atomic | string | number | boolean",
-      "concept":  
+      "predicate": "identifier_from_LogSchemaOntology (e.g., gSnomed, aActivity, aActionType, aActor, etc.)",
+      "type": "the 'type' value associated with the predicate in LogSchemaOntology (e.g., graph, atomic, string, number, boolean)",
+      "concept": ,
+      "role": "condition|action|state"
     }}
-     ],
-     
-  "logicalStructure":
-    "p1"
-    OR
-    {{ "type": "and"| "or" | "equivalent" , "args": ["p1","p2"] }}
-    OR
-    {{ "type": "not", "arg": "p1" }} 
-    OR 
-    {{ "type": "implies", "if_": "p1", "then": "p2" }} 
- 
+  ]
 }}
 
-### CLINICAL RULE:
+### CLINICAL RULE TO ANALYZE:
 \"{text}\"
 """
+
 # ============================================================
 # OLLAMA CALL
 # ============================================================
@@ -344,10 +306,6 @@ def step1(text: str, log_ontology: Dict, ltl_ontology: Dict) -> Optional[Step1IR
 # ============================================================
 # STEP 2 – LTL / DLTL (LOGICA REFINADA)
 # ============================================================
-# ============================================================
-# RULE TYPE INFERENCE
-# ============================================================
-
 def infer_rule_type(ir: Step1IR) -> str:
     """
     Decide el tipo de regla a partir de la IR.
@@ -355,22 +313,20 @@ def infer_rule_type(ir: Step1IR) -> str:
     - NORMATIVE: acción -> restricción organizativa
     """
 
-    ls = ir.logicalStructure
-
-    # 🔥 señal estructural (más fiable que heurísticas puras)
-    is_implies = hasattr(ls, "type") and ls.type == "implies"
-
+    # Hay estado clínico del paciente
     has_patient_condition = any(
         p.predicate.startswith("gSnomed")
         or p.predicate.startswith("sModelReference")
         for p in ir.propositions
     )
 
+    # Hay acción
     has_activity = any(
         p.predicate.startswith("aActivity")
         for p in ir.propositions
     )
 
+    # Hay actor
     has_actor = any(
         p.predicate.startswith("aActor")
         for p in ir.propositions
@@ -382,15 +338,7 @@ def infer_rule_type(ir: Step1IR) -> str:
     if has_activity and has_actor:
         return "NORMATIVE"
 
-    if is_implies:
-        return "REACTIVE"
-
-    return "REACTIVE"
-
-
-# ============================================================
-# PROPOSITION TRANSLATION
-# ============================================================
+    return "REACTIVE"  # por defecto, conservador
 
 def proposition_to_ltl_placeholder(p: Proposition, var: str) -> str:
     """
@@ -400,80 +348,88 @@ def proposition_to_ltl_placeholder(p: Proposition, var: str) -> str:
     p_type = p.type.lower().strip()
     clean_concept = p.concept.replace(" ", "_")
 
+    # 1) graph: PROP.<concept>(var)
     if p_type == "graph":
         concept_id = p.concept.strip().replace(" ", "_")
         return f"PROP.{concept_id}({var})"
 
+    # 2) string: var[predicate]=='value'
     elif p_type == "string":
         return f"{var}[{p.predicate}]=='{clean_concept}'"
 
+    # 3) number/boolean: var[predicate]==value
     elif p_type in ["number", "boolean"]:
         return f"{var}[{p.predicate}]=={clean_concept}"
 
+    # 4) atomic: concept
     elif p_type == "atomic":
         return f"{clean_concept}"
 
+    # fallback
     return f"{clean_concept}({var})"
 
-
-# ============================================================
-# LTL GENERATION
-# ============================================================
-
 def step15_to_ltl(ir: Step1IR) -> str:
+    def norm_role(p: Proposition) -> str:
+        return "condition" if p.role == "condition" else "action"
+
+    conds = [p for p in ir.propositions if norm_role(p) == "condition"]
+    acts  = [p for p in ir.propositions if norm_role(p) == "action"]
+
     x, y = "x", "y"
     t = ir.temporalStructure
     ts = t.anchorField
 
-    # --- ESTO ES EL RENDERIZADOR (render_logic) ---
-    # Su trabajo es convertir el árbol de lógica en texto (p1 AND p2 -> LTL)
-    def render_logic(node, var):
-        # 1. Si el LLM mandó un ID directo (ej: "p1")
-        if isinstance(node, str):
-            p = next((p for p in ir.propositions if p.id == node), None)
-            if not p: raise ValueError(f"ID {node} no encontrado")
-            return proposition_to_ltl_placeholder(p, var)
+    def get_seconds():
+        if not t.bound:
+            return None
+        # Policy B: IR already normalized to seconds
+        return int(t.bound.value)
 
-        # 2. Si el LLM mandó un objeto con "type"
-        ntype = node.type.lower()
-        
-        if ntype == "and":
-            return "(" + " & ".join(render_logic(a, var) for a in node.args) + ")"
-        
-        if ntype == "or":
-            return "(" + " | ".join(render_logic(a, var) for a in node.args) + ")"
-        
-        if ntype == "not":
-            # El cambio está aquí: acepta 'arg' o el primero de 'args'
-            target = node.arg or (node.args[0] if node.args else None)
-            return f"!( {render_logic(target, var)} )"
-        
-        if ntype == "implies":
-            # El cambio está aquí: acepta 'if_ / then' o los elementos de 'args'
-            left = node.if_ or (node.args[0] if node.args else None)
-            right = node.then or (node.args[1] if node.args else None)
-            return f"({render_logic(left, var)} -> {render_logic(right, var)})"
-        
-        return "TRUE"
-    # --- FIN DEL RENDERIZADOR ---
+    def time_diff(v_x, v_y):
+        return f"({v_y}[{ts}] - {v_x}[{ts}])"
 
-    # Aquí se llama a la función de arriba para empezar a traducir
-    logic_x = render_logic(ir.logicalStructure, x)
-    
-    # Lo que sigue son tus plantillas temporales (G, F, U, etc.)
+    def cond_ltl(var):
+        if not conds:
+            return "TRUE"
+        return " & ".join(proposition_to_ltl_placeholder(p, var) for p in conds)
+
+    def act_ltl(var):
+        if not acts:
+            return "TRUE"
+        return " & ".join(proposition_to_ltl_placeholder(p, var) for p in acts)
+
     op = (t.operator or "").lower()
-    seconds = int(t.bound.value) if t.bound else 0
+    seconds = get_seconds()
 
+    # --- Lógica de Plantillas ---
     if "every" in op:
-        return f"G {x}.(F {y}.({logic_x} & ({y}[{ts}] - {x}[{ts}]) <= {seconds}))"
+        base = act_ltl(y)
+        if seconds is None or seconds == 0:
+            return f"G {x}.({cond_ltl(x)} -> F {y}.({base}))" if conds else f"G F {y}.({base})"
+        return f"G {x}.({cond_ltl(x)} -> F {y}.({base} & {time_diff(x, y)} <= {seconds}))"
+
     if "within" in op:
-        return f"G {x}.(X F {y}.({logic_x} & ({y}[{ts}] - {x}[{ts}]) <= {seconds}))"
+        return f"G {x}.({cond_ltl(x)} -> X F {y}.({act_ltl(y)} & {time_diff(x, y)} <= {seconds}))"
+
+    if "eventually" in op:
+        return f"G {x}.({cond_ltl(x)} -> F {y}.({act_ltl(y)}))"
+
     if "always" in op:
-        return f"G {x}.({logic_x})"
+        rule_type = infer_rule_type(ir)
+
+        if rule_type == "REACTIVE":
+            # Regla clínica: condición -> acción
+            return f"G {x}.({cond_ltl(x)} -> {act_ltl(x)})"
+
+        if rule_type == "NORMATIVE":
+            # Regla organizativa: acción -> restricción
+            return f"G {x}.({act_ltl(x)} -> {cond_ltl(x)})"
+
     if "until" in op:
-        return f"({logic_x} U TRUE)"
-    
-    return f"F {x}.({logic_x})"
+        return f"({cond_ltl(x)} U {act_ltl(y)})"
+
+    raise ValueError(f"Unsupported temporal operator {t.operator}")
+
 # ============================================================
 # MAIN (NL -> IR -> LTL) - FORMATO VISUAL COMPLETO
 # ============================================================
@@ -485,68 +441,43 @@ if __name__ == "__main__":
     # Carga de recursos
     log_ontology = load_ontology(LOG_ONTOLOGY_FILE)
     ltl_ontology = load_ontology(LTL_ONTOLOGY_FILE)
-
     output_file = "results_output.json"
     all_results = []
 
     for i, sentence in enumerate(TEST_SENTENCES, start=1):
         print(f"\n📝 PROCESANDO [{i}/{len(TEST_SENTENCES)}]: {sentence}")
 
-        # ====================================================
-        # 1. IR GENERATION
-        # ====================================================
+        # 1. Ejecución del Modelo (IR)
         ir = step1(sentence, log_ontology, ltl_ontology)
 
         if ir is None:
             print("   ❌ ERROR: El Paso 1 (LLM) no devolvió datos válidos.")
             continue
 
-        # ====================================================
-        # IR OUTPUT
-        # ====================================================
+        # MOSTRAR JSON POR PANTALLA
         print("\n📦 STEP 1 IR (JSON):")
         print(ir.model_dump_json(indent=2))
 
-        # ====================================================
-        # LOGICAL STRUCTURE DEBUG (🔥 NUEVO)
-        # ====================================================
-        print("\n🧠 LOGICAL STRUCTURE:")
-        try:
-            print(ir.logicalStructure.model_dump())
-        except Exception:
-            print(ir.logicalStructure)
-
-        # ====================================================
-        # PROPOSITION IDS DEBUG (🔥 útil para tracing)
-        # ====================================================
-        print("\n🔎 PROPOSITION IDS:")
-        print([p.id for p in ir.propositions])
-
-        # ====================================================
-        # 2. LTL GENERATION
-        # ====================================================
+        # 2. Generación de LTL (Query)
         current_ltl = "ERROR"
         try:
             current_ltl = step15_to_ltl(ir)
-
-            print("\n⚙️ GENERATED LTL/DLTL QUERY:")
+            # MOSTRAR QUERY POR PANTALLA
+            print("\n⚙️  GENERATED LTL/DLTL QUERY:")
             print(f"   {current_ltl}")
-
         except Exception as e:
             print(f"\n   ⚠️ LTL Generation error: {e}")
 
-        # ====================================================
-        # 3. SAVE RESULTS
-        # ====================================================
+        # 3. GUARDADO EN EL FICHERO JSON
         result_item = {
             "id": i,
             "sentence": sentence,
             "ir": ir.model_dump(),
-            "ltl": current_ltl  # 🔥 ahora sí guardas resultado real
+            #"ltl": current_ltl
         }
-
         all_results.append(result_item)
 
+        # Guardado incremental para no perder datos
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(all_results, f, indent=2, ensure_ascii=False)
 

@@ -1,0 +1,157 @@
+
+Allergy_Panel 
+{
+"propositions": [
+{
+"id": "p1",
+"predicate": "aActivity",
+"type": "atomic",
+"concept": "Allergy_Panel"
+}
+],
+"formula": "p1"
+}
+
+Panel of Alergy
+{
+"propositions": [
+{
+"id": "p1",
+"predicate": "aActivity",
+"type": "atomic",
+"concept": "Allergy_Panel"
+}
+],
+"formula": "p1"
+}
+
+
+
+Allergy_Panel & Practitioner or Not_Atopic 
+{
+"propositions": [
+{
+"id": "p1",
+"predicate": "aActivity",
+"type": "atomic",
+"concept": "Allergy_Panel"
+},
+{
+"id": "p2",
+"predicate": "aActor",
+"type": "atomic",
+"concept": "Practitioner"
+},
+{
+"id": "p3",
+"predicate": "aActivity",
+"type": "atomic",
+"concept": "Not_Atopic"
+}
+],
+"formula": "(p1 & p2) | p3"
+}
+
+Always Allergy_Panel implies that in the future Practitioner if and only if next  Delay_For_Atopy
+
+{
+  "propositions": [
+    {
+      "id": "p1",
+      "predicate": "aActivity",
+      "type": "atomic",
+      "concept": "Allergy_Panel"
+    },
+    {
+      "id": "p2",
+      "predicate": "aActor",
+      "type": "atomic",
+      "concept": "Practitioner"
+    },
+    {
+      "id": "p3",
+      "predicate": "aActivity",
+      "type": "atomic",
+      "concept": "Delay_For_Atopy"
+    }
+  ],
+  "formula": "G ( p1 -> F ( p2 <-> X p3 ) )"
+}
+
+
+Always Allergy_Panel implies that in the future Practitioner if and only if next Delay_For_Atopy and in the past Food_Allergy_Incidence_Submodule and the time between the first and last instances is less that two hours
+
+
+{
+  "propositions": [
+    {
+      "id": "p1",
+      "predicate": "aActivity",
+      "type": "atomic",
+      "concept": "Allergy_Panel"
+    },
+    {
+      "id": "p2",
+      "predicate": "aActor",
+      "type": "atomic",
+      "concept": "Practitioner"
+    },
+    {
+      "id": "p3",
+      "predicate": "aActivity",
+      "type": "atomic",
+      "concept": "Delay_For_Atopy"
+    },
+    {
+      "id": "p4",
+      "predicate": "aActivity",
+      "type": "atomic",
+      "concept": "Food_Allergy_Incidence_Submodule"
+    }
+  ],
+  "formula": {
+    "operator": "tOp",
+    "bound": {
+      "value": 7200,
+      "unit": "seconds"
+    },
+    "anchorField": "nTimestamp",
+    "arg": "G ( p1 -> ( ( F ( p2 <-> X p3 ) ) & O p4 ) )"
+  }
+}
+
+
+Always if an event x is verifies Allergy_Panel this implies that in the future there is a point y verifies Practitioner if and only if next Delay_For_Atopy and in the past Food_Allergy_Incidence_Submodule and the time between x and y is less that 2 hours
+
+{
+  "propositions": [
+    {
+      "id": "p1",
+      "predicate": "aActivity",
+      "type": "atomic",
+      "concept": "Allergy_Panel"
+    },
+    {
+      "id": "p2",
+      "predicate": "aActor",
+      "type": "atomic",
+      "concept": "Practitioner"
+    },
+    {
+      "id": "p3",
+      "predicate": "aActivity",
+      "type": "atomic",
+      "concept": "Delay_For_Atopy"
+    },
+    {
+      "id": "p4",
+      "predicate": "aActivity",
+      "type": "atomic",
+      "concept": "Food_Allergy_Incidence_Submodule"
+    }
+  ],
+  "formula": "G ( x.( p1 -> F y.( ( p2 <-> X p3 ) & O p4 & \"(x,y)y[nTimestamp]-x[nTimestamp] < 7200\" ) ) )"
+}
+
+
+

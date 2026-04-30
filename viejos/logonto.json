@@ -12,10 +12,6 @@
         "clinical conditions",
         "patient state expressed as a diagnosis"
       ],
-      "usageContext": [
-        "patient_state",
-        "clinical_condition"
-      ],
       "defaultRole": "condition",
       "examples": [
         "diabetes",
@@ -37,17 +33,12 @@
         "nursing tasks",
         "clinical interventions"
       ],
-      "usageContext": [
-        "clinical_action",
-        "organizational_rule"
-      ],
       "defaultRole": "action",
       "examples": [
         "glucose test",
         "vital signs recording",
         "surgery",
-        "monitoring",
-        "allergy test administration"
+        "monitoring"
       ]
     },
 
@@ -60,9 +51,6 @@
         "drug administration",
         "therapy",
         "treatment actions"
-      ],
-      "usageContext": [
-        "clinical_action"
       ],
       "defaultRole": "action",
       "examples": [
@@ -82,17 +70,13 @@
         "care pathways",
         "clinical processes"
       ],
-      "usageContext": [
-        "persistent_state",
-        "organizational_context"
-      ],
       "defaultRole": "state",
       "examples": [
         "post-operative care",
         "chronic management"
       ]
     },
-
+    
     "aActor": {
       "type": "atomic",
       "description": "Agent or professional responsible for performing an action.",
@@ -102,10 +86,6 @@
         "healthcare professionals",
         "organizational roles",
         "clinical or technical systems executing actions"
-      ],
-      "usageContext": [
-        "organizational_rule",
-        "authorization_constraint"
       ],
       "defaultRole": "condition",
       "examples": [
@@ -127,10 +107,6 @@
       "useFor": [
         "clinical units",
         "hospital locations"
-      ],
-      "usageContext": [
-        "organizational_context",
-        "execution_scope"
       ],
       "defaultRole": "condition",
       "examples": [

@@ -1,0 +1,241 @@
+[
+  {
+    "id": 1,
+    "sentence": "Vital signs should be recorded every 4 hours.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEvery",
+        "bound": {
+          "value": 14400.0,
+          "unit": "seconds"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Vital signs recording",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(TRUE -> F y.(Vital_signs_recording & (y[nTimestamp] - x[nTimestamp]) <= 14400))"
+  },
+  {
+    "id": 2,
+    "sentence": "Patients with diabetes should receive a glucose test every morning.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEvery",
+        "bound": {
+          "value": 1.0,
+          "unit": "days"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "gSnomed",
+          "type": "graph",
+          "concept": "diabetes",
+          "role": "condition",
+          "snomedType": "ClinicalFinding"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "glucose test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(PROP.diabetes(x) -> F y.(glucose_test & (y[nTimestamp] - x[nTimestamp]) <= 1))"
+  },
+  {
+    "id": 3,
+    "sentence": "If a patient has fever, they should eventually receive paracetamol.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEventually",
+        "bound": {
+          "value": 60.0,
+          "unit": "seconds"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "gSnomed",
+          "type": "graph",
+          "concept": "fever",
+          "role": "condition",
+          "snomedType": "ClinicalFinding"
+        },
+        {
+          "predicate": "aActionType",
+          "type": "atomic",
+          "concept": "paracetamol",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(PROP.fever(x) -> F y.(paracetamol))"
+  },
+  {
+    "id": 5,
+    "sentence": "If an allergy is detected, epinephrine must be administered within 5 minutes.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tWithin",
+        "bound": {
+          "value": 300.0,
+          "unit": "seconds"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "gSnomed",
+          "type": "graph",
+          "concept": "allergy",
+          "role": "condition",
+          "snomedType": "Event"
+        },
+        {
+          "predicate": "aActionType",
+          "type": "atomic",
+          "concept": "epinephrine administration",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(PROP.allergy(x) -> X F y.(epinephrine_administration & (y[nTimestamp] - x[nTimestamp]) <= 300))"
+  },
+  {
+    "id": 6,
+    "sentence": "If a patient reports pain, they should eventually receive analgesia.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEventually",
+        "bound": {
+          "value": 0.0,
+          "unit": "seconds"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "gSnomed",
+          "type": "graph",
+          "concept": "pain",
+          "role": "condition",
+          "snomedType": "ClinicalFinding"
+        },
+        {
+          "predicate": "aActionType",
+          "type": "atomic",
+          "concept": "analgesia",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(PROP.pain(x) -> F y.(analgesia))"
+  },
+  {
+    "id": 7,
+    "sentence": "If a patient is in the ICU, monitoring must always be active.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tAlways",
+        "bound": {
+          "value": 0.0,
+          "unit": "seconds"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "aActor",
+          "type": "atomic",
+          "concept": "patient",
+          "role": "condition"
+        },
+        {
+          "predicate": "gSnomed",
+          "type": "graph",
+          "concept": "ICU",
+          "role": "condition",
+          "snomedType": "Situation"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "monitoring",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(patient & PROP.ICU(x) -> monitoring)"
+  },
+  {
+    "id": 9,
+    "sentence": "The patient should remain fasting until surgery is performed.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tUntil",
+        "bound": {
+          "value": 0.0,
+          "unit": "seconds"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "gSnomed",
+          "type": "graph",
+          "concept": "surgery",
+          "role": "condition",
+          "snomedType": "Procedure"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "surgery",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "(PROP.surgery(x) U surgery)"
+  },
+  {
+    "id": 10,
+    "sentence": "If a laboratory result is abnormal, a follow-up test should eventually be performed.",
+    "ir": {
+      "temporalStructure": {
+        "operator": "tEventually",
+        "bound": {
+          "value": 3600.0,
+          "unit": "seconds"
+        },
+        "anchorField": "nTimestamp"
+      },
+      "propositions": [
+        {
+          "predicate": "gSnomed",
+          "type": "graph",
+          "concept": "Abnormal laboratory result",
+          "role": "condition",
+          "snomedType": "Event"
+        },
+        {
+          "predicate": "aActivity",
+          "type": "atomic",
+          "concept": "Follow-up test",
+          "role": "action"
+        }
+      ]
+    },
+    "ltl": "G x.(PROP.Abnormal_laboratory_result(x) -> F y.(Follow-up_test))"
+  }
+]

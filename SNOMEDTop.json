@@ -1,0 +1,67 @@
+{
+  "ontology": "SNOMED_CT_Lightweight_Optimized",
+  "version": "1.0",
+  "description": "Compressed SNOMED-like top-level ontology optimized for LLM-based semantic typing in NL-to-LTL systems.",
+  "concepts": [
+    {
+      "type": "ClinicalFinding",
+      "examples": [
+        "fever",
+        "pain",
+        "hypertension",
+        "diabetes",
+        "infection"
+      ]
+    },
+    {
+      "type": "Procedure",
+      "examples": [
+        "surgery",
+        "glucose test",
+        "blood test",
+        "oxygen administration",
+        "vital signs recording"
+      ]
+    },
+    {
+      "type": "Substance",
+      "examples": [
+        "paracetamol",
+        "epinephrine",
+        "amlodipine",
+        "insulin",
+        "antibiotics"
+      ]
+    },
+    {
+      "type": "ObservableEntity",
+      "examples": [
+        "oxygen saturation",
+        "blood pressure",
+        "heart rate",
+        "glucose level",
+        "vital signs"
+      ]
+    },
+    {
+      "type": "Situation",
+      "examples": [
+        "ICU admission",
+        "fasting state",
+        "post-operative state",
+        "under antibiotic therapy",
+        "hospitalization"
+      ]
+    },
+    {
+      "type": "Event",
+      "examples": [
+        "allergy detected",
+        "abnormal lab result",
+        "oxygen desaturation",
+        "symptom onset",
+        "lab alert"
+      ]
+    }
+  ]
+}

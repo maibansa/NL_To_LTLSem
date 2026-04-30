@@ -1,0 +1,131 @@
+{
+  "ontology": "SNOMED_CT_Lightweight_TopLevel",
+  "version": "1.0",
+  "description": "Simplified top-level clinical ontology for semantic typing in NLP-to-LTL systems.",
+  "concepts": [
+    {
+      "type": "ClinicalFinding",
+      "definition": "Represents diseases, symptoms, and clinical signs observed in a patient.",
+      "includes": [
+        "diseases",
+        "symptoms",
+        "clinical signs",
+        "diagnosed conditions"
+      ],
+      "examples": [
+        "fever",
+        "pain",
+        "hypertension",
+        "diabetes mellitus"
+      ],
+      "role_in_reasoning": "Condition or trigger in temporal logic rules",
+      "snomed_equivalent_category": "Clinical finding"
+    },
+    {
+      "type": "Procedure",
+      "definition": "Represents clinical actions performed for diagnosis, treatment, or monitoring.",
+      "includes": [
+        "diagnostic tests",
+        "therapeutic interventions",
+        "drug administration",
+        "monitoring activities"
+      ],
+      "examples": [
+        "glucose test",
+        "surgery",
+        "oxygen administration",
+        "vital signs recording"
+      ],
+      "role_in_reasoning": "Action or required event in LTL specifications",
+      "snomed_equivalent_category": "Procedure"
+    },
+    {
+      "type": "Substance",
+      "definition": "Represents pharmaceutical or biologically active substances used in healthcare.",
+      "includes": [
+        "medications",
+        "drugs",
+        "biological agents",
+        "chemical compounds"
+      ],
+      "examples": [
+        "paracetamol",
+        "amlodipine",
+        "epinephrine",
+        "insulin"
+      ],
+      "role_in_reasoning": "Object of administration in procedural events",
+      "snomed_equivalent_category": "Pharmaceutical / biologic product"
+    },
+    {
+      "type": "ObservableEntity",
+      "definition": "Represents measurable physiological or clinical properties.",
+      "includes": [
+        "vital signs",
+        "laboratory values",
+        "physiological measurements"
+      ],
+      "examples": [
+        "oxygen saturation",
+        "blood pressure",
+        "glucose level",
+        "heart rate"
+      ],
+      "role_in_reasoning": "Inputs for monitoring, thresholds, and temporal constraints",
+      "snomed_equivalent_category": "Observable entity"
+    },
+    {
+      "type": "BodyStructure",
+      "definition": "Represents anatomical parts of the human body.",
+      "includes": [
+        "organs",
+        "tissues",
+        "body regions"
+      ],
+      "examples": [
+        "heart",
+        "lungs",
+        "kidney",
+        "chest"
+      ],
+      "role_in_reasoning": "Location or site of findings and procedures",
+      "snomed_equivalent_category": "Body structure"
+    },
+    {
+      "type": "Situation",
+      "definition": "Represents clinical states or contextual conditions affecting the patient.",
+      "includes": [
+        "care contexts",
+        "clinical states",
+        "treatment contexts",
+        "patient status conditions"
+      ],
+      "examples": [
+        "ICU admission",
+        "fasting state",
+        "post-operative state",
+        "under antibiotic therapy"
+      ],
+      "role_in_reasoning": "Persistent or contextual constraints in temporal logic",
+      "snomed_equivalent_category": "Situation with explicit context"
+    },
+    {
+      "type": "Event",
+      "definition": "Represents discrete time-bound occurrences that may trigger clinical actions.",
+      "includes": [
+        "abrupt clinical changes",
+        "alerts",
+        "detected conditions",
+        "lab abnormalities"
+      ],
+      "examples": [
+        "allergy detected",
+        "oxygen desaturation",
+        "abnormal lab result",
+        "symptom onset"
+      ],
+      "role_in_reasoning": "Triggers in temporal logic formulas",
+      "snomed_equivalent_category": "Clinical event / situation event"
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+Act as a Clinical Rule Compiler.
+
+==================================================================
+CRITICAL ARCHITECTURAL REQUIREMENT: THREE-LAYER SEPARATION
+==================================================================
+You MUST strictly separate the extraction into two independent layers before generating the JSON:
+
+    THE DOMAIN SEMANTIC LAYER (The "What"):
+    Extract clinical concepts into a flat list of 'propositions'.
+    You MUST use LogSchemaOntology to choose predicates.
+    List of tActivity: Administer_Allergy_Test, Age_Guard, Allergist_Guard, Allergist_Initial_Visit, Allergy_Panel, Allergy_Unspecified, Atopic, Delay_For_Allergist_Initial_Visit, Delay_For_Atopy, Delay_For_Smoking_History, Drug_Allergy_Incidence_Submodule, End_Allergist_Initial_Visit, Environmental_Allergy_Incidence_Submodule, Female, Food_Allergy_Incidence_Submodule, General_Allergy_CarePlan, Immunotherapy_Submodule, Initial, Living_With_Allergies, Male, No_Infection, Not_Atopic, Potential_COPD_Nonsmoker, Potential_COPD_Smoker, Prescribe_Epipen, Prescribe_OTC_Antihistamine, Terminal.
+    List of tActor: Care_Manager, Clinical_System, Lab_Technician, Pharmacist, Physician, Practitioner, Radiologist.
+
+    List of aActionType: at_AllergyOnset, at_CallSubmodule,at_CarePlanStart,at_Delay,at_Encounter,at_EncounterEnd,at_Guard,at_Initial,at_MedicationOrder,at_Procedure,at_Simple,at_Terminal
+
+    List of aWorflow: allergies, appendicitis, asthma, breast_cancer,colorectal_cancer,copd,dermatitis,ear_infections,epilepsy,fibromyalgia
+
+    THE FORMULA LAYER (The "When" and "How"):
+    
+    You MUST represent the logical and temporal structure recursively in the formula field using ONLY these patterns:
+
+        Atomic: Use the proposition ID string (e.g., "p1").
+
+        LTL Ontology:
+
+        Logig Operators: 
+        ! f     NOT f
+        f | g   f OR g
+        f & g   f AND g
+        f -> g  If f then g
+        f <-> g f if and only if g
+
+        LTL Operators:
+        G f     Always 'f' (Globally, future)
+        H f     'f' happens for every past state (Historical Always)
+        F f     Eventually 'f' will happen (Future)
+        O f     'f' happened in the past (Once)
+        X f     'f' happens at the Next event (False for the last event)
+        Y f     'f' happened at the previous event (False for the first event)
+        f U g   'f' happens Until 'g' is met
+        f S g   'g' happens Since 'f' happened
+
+    
+
+
+FREEZE OPERATOR
+The freeze operator binds the value of a non-atomic attribute at a specific trace position to a variable (z) for use in a sub-formula.
+
+Syntax: z.(<formula>)
+Variable: Any value in the range a-z can be used as the identifier.
+- Examples:
+      F a & x.("(x)x[V]<=34+7")
+      F x.("(x)x[p]['b']==22")
+      F x.("(x)x[p]['a']>0")
+      F x.("(x)x[p]['a']>9")
+      F x.("(x)'z' in x[att]")
+      F x.(b & "(x)    x[p]['a']>9")
+      a | b & x.("(x)x[V]==4 or x[V]==2")
+      F b & x.(F y.(a & "(x,y)x[V]==y[V]"))
+      F ((a | b) & z.((X false) & "(z)z[#] == 2"))
+      F ((a | b) & z.((X false) & F y.("(z,y)z[#] == y[#]")))
+      F x.(b & "(x)PROP.IN_DIC(x[p],'b',22)")
+      F x.(b & "(x)PROP.IN_DIC_2(x,p,'b',22)")
+
+#Note 1: when using freeze variables, for instance 'x', to refer to specific 
+#        events the way to get access to the attributes will by means of expressions
+#        of the form "x[<attribute_name>]", a in the example before.
+
+#Note 2: By default, "my_propositions.py" is imported at booting time as "PROP". 
+#        This file is the place to write the Python functions used in the non-atomic propositions.
+#        In the examples, we are assuming that both, "IN_DIC" and "IN_DIC_2"
+#        are defined in "my_propositions.py". Add this funcions in the json.
+==================================================================
+
+NEVER mix clinical concepts into temporalStructure, and NEVER mix temporal constraints into propositions.
+==================================================================
+
+- CANONICAL TIME NORMALIZATION (REQUIRED):
+  If a temporal bound is mentioned, convert it to seconds
+
+==================================================================
+
+### REFERENCE ONTOLOGIES
+#1) LTL Ontology:
+#{onto_logic}
+
+#2) Log Ontology:
+{onto_semantic}
+
+
+Return ONLY valid JSON based on this template:
+
+{{
+"propositions": [
+{{
+"id": "p1",
+"predicate": "gSnomed | aActivity | aActionType | aWorkflow | aActor | sModelReference",
+"type": "graph | atomic | string | number | boolean",
+"concept": "Name_From_List"
+}}
+],
+"formula":
+"p1"
+| {{
+
+}}
+
+### CLINICAL RULE:  Always if an event x is verifies Allergy_Panel this implies that in the future there is a point y verifies Practitioner if and only if next Delay_For_Atopy and in the past Food_Allergy_Incidence_Submodule and the time between x and y is less that 2 hours

@@ -1,0 +1,43 @@
+{
+  "concepts": {
+    "gSnomed": {
+      "category": "ClinicalFinding",
+      "type": "graph",
+      "role": "condition",
+      "ltl_binding": "propositional_state",
+      "examples": ["diabetes", "fever", "pain"]
+    },
+
+    "aActivity": {
+      "category": "Procedure",
+      "type": "atomic",
+      "role": "action",
+      "ltl_binding": "event_action",
+      "examples": ["surgery", "glucose test", "monitoring"]
+    },
+
+    "aActionType": {
+      "category": "SubstanceOrTherapy",
+      "type": "atomic",
+      "role": "action",
+      "ltl_binding": "treatment_event",
+      "examples": ["epinephrine", "paracetamol"]
+    },
+
+    "sModelReference": {
+      "category": "Situation",
+      "type": "string",
+      "role": "context",
+      "ltl_binding": "event_filter",
+      "examples": ["ICU", "ward", "emergency"]
+    },
+
+    "aWorkflow": {
+      "category": "ClinicalProcess",
+      "type": "atomic",
+      "role": "state",
+      "ltl_binding": "process_state",
+      "examples": ["post-operative care"]
+    }
+  }
+}

@@ -1,79 +1,45 @@
 {
   "LtlLogicOntology": {
-    "syntax_reference": {
-      "logic_operators": {
-        "NOT": "!",
-        "OR": "|",
-        "AND": "&",
-        "IMPLIES": "->",
-        "IFF": "<->"
-      },
-      "ltl_future_operators": {
-        "ALWAYS": "G",
-        "EVENTUALLY": "F",
-        "NEXT": "X",
-        "UNTIL": "U",
-        "RELEASE": "R",
-        "WEAK_UNTIL": "W"
-      },
-      "ltl_past_operators": {
-        "HISTORICAL_ALWAYS": "H",
-        "ONCE": "O",
-        "PREVIOUS": "Y",
-        "SINCE": "S",
-        "BEFORE": "B"
-      }
-    },
     "operators": {
-      "tEvery": {
-        "type": "temporal_operator",
-        "ltl_pattern": "G x. ( {cond} -> F y. ( {act} & dist(x,y) <= {b} ) )",
-        "useFor": ["periodicity", "recurrence", "daily", "hourly"]
-      },
-      "tWithin": {
-        "type": "temporal_operator",
-        "ltl_pattern": "G x. ( {cond} -> X F y. ( {act} & dist(x,y) <= {b} ) )",
-        "useFor": ["deadlines", "response time"]
-      },
-      "tEventually": {
-        "type": "temporal_operator",
-        "ltl_pattern": "G x. ( {cond} -> F y. ( {act} ) )",
-        "useFor": ["liveness", "non-urgent goals"]
-      },
       "tAlways": {
-        "type": "temporal_operator",
-        "ltl_pattern": "G x. ( {cond} -> {act} )",
+        "type": "future_operator",
+        "ltl_pattern": "G( {cond} -> {act} )",
         "useFor": ["safety", "invariants", "continuous states"]
       },
-      "tUntil": {
-        "type": "temporal_operator",
-        "ltl_pattern": "( {cond} U {act} )",
-        "useFor": ["maintenance", "pre-conditions"]
+      "tEventually": {
+        "type": "future_operator",
+        "ltl_pattern": "F( {cond} )",
+        "useFor": ["liveness", "guaranteed completion", "non-urgent goals"]
       },
-      "tRelease": {
-        "type": "temporal_operator",
-        "ltl_pattern": "( {cond} R {act} )",
-        "useFor": ["obligation release", "interruption"]
+      "tNext": {
+        "type": "future_operator",
+        "ltl_pattern": "X( {cond} )",
+        "useFor": ["immediate next state", "step-by-step transitions"]
+      },
+      "tUntil": {
+        "type": "future_operator",
+        "ltl_pattern": "( {cond} U {act} )",
+        "useFor": ["maintenance", "pre-conditions until trigger"]
+      },
+      "tHistorical": {
+        "type": "past_operator",
+        "ltl_pattern": "H( {cond} )",
+        "useFor": ["past invariants", "audit logs", "unchanged history"]
       },
       "tOnce": {
         "type": "past_operator",
-        "ltl_pattern": "O {cond} -> {act}",
-        "useFor": ["history check", "previous occurrence"]
+        "ltl_pattern": "O( {cond} )",
+        "useFor": ["history check", "at least one past occurrence"]
+      },
+      "tPrevious": {
+        "type": "past_operator",
+        "ltl_pattern": "Y( {cond} )",
+        "useFor": ["immediate past state", "last tick analysis"]
       },
       "tSince": {
         "type": "past_operator",
         "ltl_pattern": "( {act} S {cond} )",
-        "useFor": ["persistence since event", "post-condition states"]
-      },
-      "tHistorical": {
-        "type": "past_operator",
-        "ltl_pattern": "H {cond}",
-        "useFor": ["past invariants", "audit logs"]
-      },
-      "tPrevious": {
-        "type": "past_operator",
-        "ltl_pattern": "Y {cond}",
-        "useFor": ["immediate past state"]
+        "useFor": ["persistence since event", "post-condition tracking"]
       }
     }
   }
