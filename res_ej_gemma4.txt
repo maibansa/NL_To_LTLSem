@@ -1,0 +1,119 @@
+
+[1] REGLA: Allergy_Panel
+
+🔍 [DEBUG] CONTEXTO RECUPERADO DEL RAG:
+- Allergy_Panel (Type: tActivity)
+- at_AllergyOnset (Type: aActionType)
+- Administer_Allergy_Test (Type: tActivity)
+----------------------------------------
+
+🧠 ANÁLISIS LÓGICO: The rule simply states the existence of an Allergy_Panel. There are no temporal constraints.
+
+📦 PROPOSICIONES FINALES:
+   • p1: [tActivity] Allergy_Panel (atomic)
+
+⚙️ FÓRMULA RESULTANTE:
+   p1
+================================================================================
+
+[2] REGLA: Allergy_Panel & Practitioner or Not_Atopic
+
+🔍 [DEBUG] CONTEXTO RECUPERADO DEL RAG:
+- Practitioner (Type: tActor)
+- Pharmacist (Type: tActor)
+- Atopic (Type: tActivity)
+- Administer_Allergy_Test (Type: tActivity)
+- Physician (Type: tActor)
+- Not_Atopic (Type: tActivity)
+- Allergy_Panel (Type: tActivity)
+- at_AllergyOnset (Type: aActionType)
+- Delay_For_Atopy (Type: tActivity)
+----------------------------------------
+
+🧠 ANÁLISIS LÓGICO: This rule is a simple conjunction and disjunction of propositions. There are no temporal keywords, so we only use atomic propositions.
+
+📦 PROPOSICIONES FINALES:
+   • p1: [tActivity] Allergy_Panel (atomic)
+   • p2: [tActor] Practitioner (atomic)
+   • p3: [tActivity] Not_Atopic (atomic)
+
+⚙️ FÓRMULA RESULTANTE:
+   p1 & p2 | p3
+================================================================================
+
+[3] REGLA: Always Allergy_Panel implies that in the future Practitioner if and only if next  Delay_For_Atopy
+
+🔍 [DEBUG] CONTEXTO RECUPERADO DEL RAG:
+- Practitioner (Type: tActor)
+- End_Allergist_Initial_Visit (Type: tActivity)
+- at_Delay (Type: aActionType)
+- Pharmacist (Type: tActor)
+- Atopic (Type: tActivity)
+- Initial (Type: tActivity)
+- Administer_Allergy_Test (Type: tActivity)
+- at_Encounter (Type: aActionType)
+- Delay_For_Smoking_History (Type: tActivity)
+- Physician (Type: tActor)
+- Not_Atopic (Type: tActivity)
+- Male (Type: tActivity)
+- Allergy_Panel (Type: tActivity)
+- at_AllergyOnset (Type: aActionType)
+- Delay_For_Atopy (Type: tActivity)
+- Female (Type: tActivity)
+- at_Initial (Type: aActionType)
+----------------------------------------
+
+🧠 ANÁLISIS LÓGICO: The rule states a global implication: 'Always Allergy_Panel implies that in the future Practitioner if and only if next Delay_For_Atopy'. This translates to a globally scoped implication (G) where the antecedent is 'Allergy_Panel' and the consequent is a biconditional statement. The consequent involves a future temporal operator (F) for 'Practitioner' and a next temporal operator (X) for 'Delay_For_Atopy'. The biconditional statement is enclosed in parentheses due to its nesting within the F operator.
+
+📦 PROPOSICIONES FINALES:
+   • p1: [tActivity] Allergy_Panel (atomic)
+   • p2: [tActor] Practitioner (atomic)
+   • p3: [tActivity] Delay_For_Atopy (atomic)
+
+⚙️ FÓRMULA RESULTANTE:
+   G(p1 -> (F p2 <-> X p3))
+================================================================================
+
+[4] REGLA: Always Allergy_Panel implies that in the future Practitioner if and only if next Delay_For_Atopy and in the past Food_Allergy_Incidence_Submodule and the time between the first and last instances is less that two hours
+
+🔍 [DEBUG] CONTEXTO RECUPERADO DEL RAG:
+- Lab_Technician (Type: tActor)
+- Administer_Allergy_Test (Type: tActivity)
+- at_Encounter (Type: aActionType)
+- Allergy_Panel (Type: tActivity)
+- Practitioner (Type: tActor)
+- Allergist_Initial_Visit (Type: tActivity)
+- at_Simple (Type: aActionType)
+- at_AllergyOnset (Type: aActionType)
+- at_Terminal (Type: aActionType)
+- Female (Type: tActivity)
+- at_CallSubmodule (Type: aActionType)
+- Delay_For_Allergist_Initial_Visit (Type: tActivity)
+- Initial (Type: tActivity)
+- Environmental_Allergy_Incidence_Submodule (Type: tActivity)
+- Male (Type: tActivity)
+- at_Initial (Type: aActionType)
+- End_Allergist_Initial_Visit (Type: tActivity)
+- at_Delay (Type: aActionType)
+- Pharmacist (Type: tActor)
+- Atopic (Type: tActivity)
+- Food_Allergy_Incidence_Submodule (Type: tActivity)
+- Delay_For_Smoking_History (Type: tActivity)
+- Physician (Type: tActor)
+- Not_Atopic (Type: tActivity)
+- at_EncounterEnd (Type: aActionType)
+- Drug_Allergy_Incidence_Submodule (Type: tActivity)
+- Delay_For_Atopy (Type: tActivity)
+- colorectal_cancer (Type: aWorkflow)
+----------------------------------------
+
+🧠 ANÁLISIS LÓGICO: The rule states a global implication: 'Always Allergy_Panel implies that in the future Practitioner if and only if next Delay_For_Atopy and in the past Food_Allergy_Incidence_Submodule and the time between the first and last instances is less that two hours'.  We break this down: 1. 'Always Allergy_Panel': This translates to G p1. 2. 'implies that in the future Practitioner': This translates to -> F p2. 3. 'if and only if next Delay_For_Atopy': This translates to <-> X p3. 4. 'and in the past Food_Allergy_Incidence_Submodule': This translates to & O p4. 5. 'and the time between the first and last instances is less that two hours': This requires a temporal constraint that cannot be expressed directly in LTL. We will omit this constraint as per the instructions. Combining these, we get: G p1 -> F (p2 <-> X p3 & O p4).
+
+📦 PROPOSICIONES FINALES:
+   • p1: [tActivity] Allergy_Panel (atomic)
+   • p2: [tActor] Practitioner (atomic)
+   • p3: [tActivity] Delay_For_Atopy (atomic)
+   • p4: [tActivity] Food_Allergy_Incidence_Submodule (atomic)
+
+⚙️ FÓRMULA RESULTANTE:
+   G p1 -> F (p2 <-> X p3 & O p4)

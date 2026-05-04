@@ -1,0 +1,109 @@
+RULE 1: If an allergy test is administered, it must always be performed by a laboratory technician
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "Administer_Allergy_Test"},
+    {"id": "p2", "predicate": "aActor", "type": "atomic", "concept": "Lab_Technician"}
+  ],
+  "formula": "G (p1 -> p2)"
+}
+
+RULE 2: Vital signs should be recorded every 4 hours.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "General_Allergy_CarePlan"}
+  ],
+  "formula": "G (p1 -> X (G (!p1 U x.(p1 & \"(x)x[timestamp_diff] <= 14400\"))))"
+}
+
+RULE 3: Patients with diabetes should receive a glucose test every morning.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "Age_Guard"},
+    {"id": "p2", "predicate": "aActivity", "type": "atomic", "concept": "Allergy_Panel"}
+  ],
+  "formula": "G (p1 -> F x.(p2 & \"(x)x[time_of_day] < 43200\"))"
+}
+
+RULE 4: If a patient has fever, they should eventually receive paracetamol.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "No_Infection"},
+    {"id": "p2", "predicate": "aActivity", "type": "atomic", "concept": "Prescribe_OTC_Antihistamine"}
+  ],
+  "formula": "G (!p1 -> F p2)"
+}
+
+RULE 5: If the patient has hypertension, they must receive amlodipine within 24 hours.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "Potential_COPD_Smoker"},
+    {"id": "p2", "predicate": "aActionType", "type": "atomic", "concept": "at_MedicationOrder"}
+  ],
+  "formula": "G (z.(p1 -> F x.(p2 & \"(z,x)x[ts] - z[ts] <= 86400\")))"
+}
+
+RULE 6: If an allergy is detected, epinephrine must be administered within 5 minutes.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "Allergy_Unspecified"},
+    {"id": "p2", "predicate": "aActivity", "type": "atomic", "concept": "Prescribe_Epipen"}
+  ],
+  "formula": "G (z.(p1 -> F x.(p2 & \"(z,x)x[ts] - z[ts] <= 300\")))"
+}
+
+RULE 7: If a patient reports pain, they should eventually receive analgesia.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "Allergist_Initial_Visit"},
+    {"id": "p2", "predicate": "aActionType", "type": "atomic", "concept": "at_Procedure"}
+  ],
+  "formula": "G (p1 -> F p2)"
+}
+
+RULE 8: If a patient is in the ICU, monitoring must always be active.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "Initial"},
+    {"id": "p2", "predicate": "aActionType", "type": "atomic", "concept": "at_Simple"},
+    {"id": "p3", "predicate": "aActivity", "type": "atomic", "concept": "Terminal"}
+  ],
+  "formula": "G (p1 -> (p2 U p3))"
+}
+
+RULE 9: If oxygen saturation drops, supplemental oxygen must be provided within 10 minutes.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "Potential_COPD_Nonsmoker"},
+    {"id": "p2", "predicate": "aActionType", "type": "atomic", "concept": "at_Procedure"}
+  ],
+  "formula": "G (z.(p1 -> F x.(p2 & \"(z,x)x[ts] - z[ts] <= 600\")))"
+}
+
+RULE 10: The patient should remain fasting until surgery is performed.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActivity", "type": "atomic", "concept": "Delay_For_Allergist_Initial_Visit"},
+    {"id": "p2", "predicate": "aActionType", "type": "atomic", "concept": "at_Encounter"}
+  ],
+  "formula": "p1 U p2"
+}
+
+RULE 11: If a laboratory result is abnormal, a follow-up test should eventually be performed.
+------------------------------------------------------------------
+{
+  "propositions": [
+    {"id": "p1", "predicate": "aActionType", "type": "atomic", "concept": "at_Guard"},
+    {"id": "p2", "predicate": "aActivity", "type": "atomic", "concept": "Allergy_Panel"}
+  ],
+  "formula": "G (p1 -> F p2)"
+}

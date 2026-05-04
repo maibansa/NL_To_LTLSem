@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 *.nq
 ollama
+gemma-2-27b-it-Q4_K_M.gguf

@@ -6,14 +6,130 @@ CLINICAL RULE COMPILER BENCHMARK: 50 ADVANCED QUERIES (INC. SNOMED)
 
 1. If 'Allergy_Unspecified' occurs, the event must contain a 'gSnomed' reference to the concept '419199007' (Allergy to substance).
 2. Whenever 'Administer_Allergy_Test' is executed, it must eventually be followed by a 'gSnomed' finding of either 'Atopy' (225944002) or 'Negative' (260385009).
-3. If 'Prescribe_Epipen' is called, the 'sModelReference' must strictly point to the SNOMED code for 'Epinephrine 0.3mg injection' (substance).
+3. Ensure that when an Epipen is prescribed, the system validates both the numerical dosage in the properties and the clinical nature of the substance via SNOMED.
 4. A trace cannot contain a 'gSnomed' for 'Latex Allergy' (300916003) if the 'Allergist_Guard' recorded a 'False' outcome for environmental triggers.
 5. If 'Drug_Allergy_Incidence_Submodule' is active, any 'at_MedicationOrder' must have an attribute 'x[p]' containing a valid SNOMED hierarchy code for 'Antibiotics'.
 6. Every 'at_AllergyOnset' event must be linked to a 'gSnomed' concept representing a clinical manifestation (e.g., 'Urticaria' 64140007).
 7. If 'Potential_COPD_Smoker' is identified, the next state must include a 'gSnomed' code related to 'Tobacco smoking' (446041000011109).
 8. If the 'clinicalCode' in 'Allergy_Panel' is 'SCTID: 252325008', then the actor must be a 'Practitioner' with specialization in 'Immunology'.
-9. When 'Immunotherapy_Submodule' starts, the 'sModelReference' must match a SNOMED procedure code for 'Desensitization therapy'.
+9. In the Immunotherapy workflow, any medication order must be cross-referenced against the "Allergen extract" SNOMED hierarchy to prevent the administration of unrelated drugs..
 10. If 'PROP.IS_SNOMED_CHILD(x[p], "373270004")' (Substance with penicillin-like structure) is true, then 'at_AllergyOnset' is mandatory.
+
+
+==================================================================
+RESULTADO DE COMPILACIÓN DE REGLAS CLÍNICAS
+==================================================================
+
+REGLA 1: If 'Allergy_Unspecified' occurs, the event must contain a 'gSnomed' reference to the concept '419199007' (Allergy to substance).
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p1_act", "predicate": "aActivity", "type": "atomic", "concept": "Allergy_Unspecified"},
+  {"id": "p1_sno", "predicate": "gSnomed", "type": "graph", "concept": "Allergy_to_substance"}
+]
+FÓRMULA:
+G (x.(p1_act -> PROP.Allergy_to_substance(x)))
+------------------------------------------------------------------
+
+REGLA 2: Whenever 'Administer_Allergy_Test' is executed, it must eventually be followed by a 'gSnomed' finding of either 'Atopy' (225944002) or 'Negative' (260385009).
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p2_act", "predicate": "aActivity", "type": "atomic", "concept": "Administer_Allergy_Test"},
+  {"id": "p2_sno1", "predicate": "gSnomed", "type": "graph", "concept": "Atopy"},
+  {"id": "p2_sno2", "predicate": "gSnomed", "type": "graph", "concept": "Negative"}
+]
+FÓRMULA:
+G (p2_act -> F y.(PROP.Atopy(y) | PROP.Negative(y)))
+------------------------------------------------------------------
+
+REGLA 3: Ensure that when an Epipen is prescribed, the system validates both the numerical dosage in the properties and the clinical nature of the substance via SNOMED.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p3_act", "predicate": "aActivity", "type": "atomic", "concept": "Prescribe_Epipen"},
+  {"id": "p3_sno", "predicate": "gSnomed", "type": "graph", "concept": "Epinephrine"}
+]
+FÓRMULA:
+G (x.(p3_act -> ("(x)x[aActivity]['dosage'] > 0" & PROP.Epinephrine(x))))
+------------------------------------------------------------------
+
+REGLA 4: A trace cannot contain a 'gSnomed' for 'Latex Allergy' (300916003) if the 'Allergist_Guard' recorded a 'False' outcome for environmental triggers.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p4_sno", "predicate": "gSnomed", "type": "graph", "concept": "Latex_Allergy"},
+  {"id": "p4_grd", "predicate": "aActivity", "type": "atomic", "concept": "Allergist_Guard"}
+]
+FÓRMULA:
+! F (x.(p4_sno & O (p4_grd & "(current)current[aActivity]['outcome'] == False")))
+------------------------------------------------------------------
+
+REGLA 5: If 'Drug_Allergy_Incidence_Submodule' is active, any 'at_MedicationOrder' must have an attribute 'x[p]' containing a valid SNOMED hierarchy code for 'Antibiotics'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p5_wf", "predicate": "aWorkflow", "type": "atomic", "concept": "Drug_Allergy_Incidence_Submodule"},
+  {"id": "p5_med", "predicate": "aActionType", "type": "atomic", "concept": "at_MedicationOrder"}
+]
+FÓRMULA:
+G (p5_wf -> G x.(p5_med -> "(x)PROP.IS_SNOMED_CHILD(x[p], 'Antibiotics')"))
+------------------------------------------------------------------
+
+REGLA 6: Every 'at_AllergyOnset' event must be linked to a 'gSnomed' concept representing a clinical manifestation (e.g., 'Urticaria' 64140007).
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p6_on", "predicate": "aActionType", "type": "atomic", "concept": "at_AllergyOnset"},
+  {"id": "p6_sno", "predicate": "gSnomed", "type": "graph", "concept": "Urticaria"}
+]
+FÓRMULA:
+G (x.(p6_on -> PROP.Urticaria(x)))
+------------------------------------------------------------------
+
+REGLA 7: If 'Potential_COPD_Smoker' is identified, the next state must include a 'gSnomed' code related to 'Tobacco smoking' (446041000011109).
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p7_smk", "predicate": "aActivity", "type": "atomic", "concept": "Potential_COPD_Smoker"},
+  {"id": "p7_sno", "predicate": "gSnomed", "type": "graph", "concept": "Tobacco_smoking"}
+]
+FÓRMULA:
+G (p7_smk -> X y.(PROP.Tobacco_smoking(y)))
+------------------------------------------------------------------
+
+REGLA 8: If the 'clinicalCode' in 'Allergy_Panel' is 'SCTID: 252325008', then the actor must be a 'Practitioner' with specialization in 'Immunology'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p8_pan", "predicate": "aActivity", "type": "atomic", "concept": "Allergy_Panel"},
+  {"id": "p8_actr", "predicate": "aActor", "type": "atomic", "concept": "Practitioner"}
+]
+FÓRMULA:
+G (x.(p8_pan & "(x)x[aActivity]['clinicalCode'] == 'SCTID: 252325008'" -> (p8_actr & "(x)x[aActor]['specialization'] == 'Immunology'")))
+------------------------------------------------------------------
+
+REGLA 9: In the Immunotherapy workflow, any medication order must be cross-referenced against the 'Allergen extract' SNOMED hierarchy to prevent the administration of unrelated drugs.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p9_wf", "predicate": "aWorkflow", "type": "atomic", "concept": "Immunotherapy_Submodule"},
+  {"id": "p9_med", "predicate": "aActionType", "type": "atomic", "concept": "at_MedicationOrder"}
+]
+FÓRMULA:
+G (p9_wf -> G x.(p9_med -> "(x)PROP.IS_SNOMED_CHILD(x[p], 'Allergen_extract')"))
+------------------------------------------------------------------
+
+REGLA 10: If 'PROP.IS_SNOMED_CHILD(x[p], '373270004')' (Substance with penicillin-like structure) is true, then 'at_AllergyOnset' is mandatory.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p10_on", "predicate": "aActionType", "type": "atomic", "concept": "at_AllergyOnset"}
+]
+FÓRMULA:
+G (x( "(x)PROP.IS_SNOMED_CHILD(x[p], '373270004')" -> p10_on ))
+------------------------------------------------------------------
+
 
 --- DATA CORRELATION & FREEZE OPERATOR (ADVANCED) ---
 
@@ -28,6 +144,67 @@ CLINICAL RULE COMPILER BENCHMARK: 50 ADVANCED QUERIES (INC. SNOMED)
 19. If two 'at_Encounter' events occur, the 'practitioner_id' of the second must be different from the first to ensure a second opinion.
 20. In 'Food_Allergy_Incidence_Submodule', if 'x[p]["food_type"] == "peanuts"', then 'at_Guard' must trigger a 'High_Priority' flag.
 
+
+==================================================================
+CORRECCIÓN DE SINTAXIS (OPERADOR FREEZE)
+==================================================================
+
+REGLA 19: If two 'at_Encounter' events occur, the 'practitioner_id' of the second must be different from the first.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p19_a", "predicate": "aActionType", "type": "atomic", "concept": "at_Encounter"}
+]
+FÓRMULA:
+G (x.(p19_a -> X F y.(p19_a & "(x,y)y[p19_a]['practitioner_id'] != x[p19_a]['practitioner_id']")))
+------------------------------------------------------------------
+
+REGLA 12: If 'Administer_Allergy_Test' (z) ... every 'at_Procedure' (current) must be performed by 'z'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p12_a", "predicate": "aActivity", "type": "atomic", "concept": "Administer_Allergy_Test"},
+  {"id": "p12_b", "predicate": "aActionType", "type": "atomic", "concept": "at_Procedure"},
+  {"id": "p12_c", "predicate": "aActivity", "type": "atomic", "concept": "Terminal"}
+]
+FÓRMULA:
+G (z.(p12_a -> ( (p12_b -> "(z,current)z[p12_a]['actor'] == current[p12_b]['actor']") U p12_c )))
+------------------------------------------------------------------
+
+REGLA 13: allergen_id = A1 in onset, linked_allergen = A1 in Epipen.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p13_a", "predicate": "aActionType", "type": "atomic", "concept": "at_AllergyOnset"},
+  {"id": "p13_b", "predicate": "aActivity", "type": "atomic", "concept": "Prescribe_Epipen"}
+]
+FÓRMULA:
+G (x.(p13_a -> F y.(p13_b & "(x,y)x[p13_a]['allergen_id'] == y[p13_b]['linked_allergen']")))
+------------------------------------------------------------------
+
+REGLA 15: duration exactly equal to 'x[min_wait_time]'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p15_a", "predicate": "aActivity", "type": "atomic", "concept": "Environmental_Allergy_Incidence_Submodule"},
+  {"id": "p15_b", "predicate": "aActionType", "type": "atomic", "concept": "at_Delay"}
+]
+FÓRMULA:
+G (x.(p15_a -> X y.(p15_b & "(x,y)y[p15_b]['duration'] == x[p15_a]['min_wait_time']")))
+------------------------------------------------------------------
+
+REGLA 17: clinicalCode constant for all at_MedicationOrder.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p17_a", "predicate": "aActivity", "type": "atomic", "concept": "Allergy_Unspecified"},
+  {"id": "p17_b", "predicate": "aActionType", "type": "atomic", "concept": "at_MedicationOrder"}
+]
+FÓRMULA:
+G (c.(p17_a -> G (p17_b -> "(c,current)current[p17_b]['clinicalCode'] == c[p17_a]['clinicalCode']")))
+------------------------------------------------------------------
+
+
 --- COMPLEX TEMPORAL LTL ---
 
 21. Always, if 'at_AllergyOnset' happens, the patient must be 'Atopic' within 7200 seconds or the care plan is void.
@@ -41,6 +218,121 @@ CLINICAL RULE COMPILER BENCHMARK: 50 ADVANCED QUERIES (INC. SNOMED)
 29. If 'Potential_COPD_Nonsmoker' occurs, then 'Potential_COPD_Smoker' must never have happened in the past for this trace.
 30. Every 'at_Simple' recording (vital signs) must be followed by another 'at_Simple' within 14400 seconds, unless 'Terminal' is reached.
 
+
+==================================================================
+RESULTADO DE COMPILACIÓN DE REGLAS CLÍNICAS (21-30)
+==================================================================
+
+REGLA 21: Always, if 'at_AllergyOnset' happens, the patient must be 'Atopic' within 7200 seconds or the care plan is void.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p21a", "predicate": "aActionType", "type": "atomic", "concept": "at_AllergyOnset"},
+  {"id": "p21b", "predicate": "aActivity", "type": "atomic", "concept": "Atopic"}
+]
+FÓRMULA:
+G x.(p21a -> F y.(p21b & "(x,y)y[p21b]['timestamp'] - x[p21a]['timestamp'] <= 7200"))
+------------------------------------------------------------------
+
+REGLA 22: After 'Allergist_Initial_Visit' starts, the patient must remain in the 'Encouter' state until 'at_EncounterEnd' is explicitly called.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p22a", "predicate": "aActivity", "type": "atomic", "concept": "Allergist_Initial_Visit"},
+  {"id": "p22b", "predicate": "aActionType", "type": "atomic", "concept": "at_Encounter"},
+  {"id": "p22c", "predicate": "aActionType", "type": "atomic", "concept": "at_EncounterEnd"}
+]
+FÓRMULA:
+G (p22a -> (p22b U p22c))
+------------------------------------------------------------------
+
+REGLA 23: If 'Prescribe_Epipen' occurs, it must be the case that 'Administer_Allergy_Test' happened at least once since the last 'Initial' event.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p23a", "predicate": "aActivity", "type": "atomic", "concept": "Prescribe_Epipen"},
+  {"id": "p23b", "predicate": "aActivity", "type": "atomic", "concept": "Administer_Allergy_Test"},
+  {"id": "p23c", "predicate": "aActivity", "type": "atomic", "concept": "Initial"}
+]
+FÓRMULA:
+G (p23a -> (p23c S p23b))
+------------------------------------------------------------------
+
+REGLA 24: It is globally true that 'Delay_For_Atopy' cannot be followed by 'Not_Atopic' in the immediate next state.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p24a", "predicate": "aActivity", "type": "atomic", "concept": "Delay_For_Atopy"},
+  {"id": "p24b", "predicate": "aActivity", "type": "atomic", "concept": "Not_Atopic"}
+]
+FÓRMULA:
+G (p24a -> ! X p24b)
+------------------------------------------------------------------
+
+REGLA 25: Once 'Living_With_Allergies' becomes true, it must stay true until 'Terminal' happens (No recovery path).
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p25a", "predicate": "aActivity", "type": "atomic", "concept": "Living_With_Allergies"},
+  {"id": "p25b", "predicate": "aActionType", "type": "atomic", "concept": "at_Terminal"}
+]
+FÓRMULA:
+G (p25a -> (p25a U p25b))
+------------------------------------------------------------------
+
+REGLA 26: If 'Delay_For_Allergist_Initial_Visit' happens, 'Allergist_Initial_Visit' must occur eventually, but not before 86400 seconds (24h).
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p26a", "predicate": "aActivity", "type": "atomic", "concept": "Delay_For_Allergist_Initial_Visit"},
+  {"id": "p26b", "predicate": "aActivity", "type": "atomic", "concept": "Allergist_Initial_Visit"}
+]
+FÓRMULA:
+G x.(p26a -> F y.(p26b & "(x,y)y[p26b]['timestamp'] - x[p26a]['timestamp'] >= 86400"))
+------------------------------------------------------------------
+
+REGLA 27: 'Initial' must be the first event (x) such that there is no previous event (Y false).
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p27", "predicate": "aActivity", "type": "atomic", "concept": "Initial"}
+]
+FÓRMULA:
+p27 & ! Y true
+------------------------------------------------------------------
+
+REGLA 28: If 'Immunotherapy_Submodule' is called, it must be preceded by 'Allergy_Panel' within a window of exactly 30 days (2592000s).
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p28a", "predicate": "aActivity", "type": "atomic", "concept": "Immunotherapy_Submodule"},
+  {"id": "p28b", "predicate": "aActivity", "type": "atomic", "concept": "Allergy_Panel"}
+]
+FÓRMULA:
+G x.(p28a -> O y.(p28b & "(x,y)x[p28a]['timestamp'] - y[p28b]['timestamp'] <= 2592000"))
+------------------------------------------------------------------
+
+REGLA 29: If 'Potential_COPD_Nonsmoker' occurs, then 'Potential_COPD_Smoker' must never have happened in the past for this trace.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p29a", "predicate": "aActivity", "type": "atomic", "concept": "Potential_COPD_Nonsmoker"},
+  {"id": "p29b", "predicate": "aActivity", "type": "atomic", "concept": "Potential_COPD_Smoker"}
+]
+FÓRMULA:
+G (p29a -> ! O p29b)
+------------------------------------------------------------------
+
+REGLA 30: Every 'at_Simple' recording (vital signs) must be followed by another 'at_Simple' within 14400 seconds, unless 'Terminal' is reached.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p30a", "predicate": "aActionType", "type": "atomic", "concept": "at_Simple"},
+  {"id": "p30b", "predicate": "aActionType", "type": "atomic", "concept": "at_Terminal"}
+]
+FÓRMULA:
+G x.(p30a -> (X F y.(p30a & "(x,y)y[p30a]['timestamp'] - x[p30a]['timestamp'] <= 14400") | F p30b))
+------------------------------------------------------------------
 --- WORKFLOW & ACTOR CONSTRAINTS ---
 
 31. If 'Allergist_Guard' is false, the 'allergies' workflow must jump directly to 'General_Allergy_CarePlan' in the next state.
@@ -54,15 +346,145 @@ CLINICAL RULE COMPILER BENCHMARK: 50 ADVANCED QUERIES (INC. SNOMED)
 39. If 'Care_Manager' is the actor, the activity must be 'General_Allergy_CarePlan' or 'Delay_For_Atopy'.
 40. Any 'at_Procedure' with a 'cost > 500' must be authorized by a 'Practitioner' and not by the 'Clinical_System'.
 
+==================================================================
+RESULTADO DE COMPILACIÓN DE REGLAS CLÍNICAS (31-40)
+==================================================================
+
+REGLA 31: If 'Allergist_Guard' is false, the 'allergies' workflow must jump directly to 'General_Allergy_CarePlan'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p31a", "predicate": "aActivity", "type": "atomic", "concept": "Allergist_Guard"},
+  {"id": "p31b", "predicate": "aWorkflow", "type": "atomic", "concept": "allergies"},
+  {"id": "p31c", "predicate": "aActivity", "type": "atomic", "concept": "General_Allergy_CarePlan"}
+]
+FÓRMULA:
+G x.( (p31a & p31b & "(x)x[p31a]['result'] == false") -> X p31c )
+------------------------------------------------------------------
+
+REGLA 32: Only a 'Pharmacist' can execute an event with 'at_ActionType = at_MedicationOrder'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p32a", "predicate": "aActor", "type": "atomic", "concept": "Pharmacist"},
+  {"id": "p32b", "predicate": "aActionType", "type": "atomic", "concept": "at_MedicationOrder"}
+]
+FÓRMULA:
+G (p32b -> p32a)
+------------------------------------------------------------------
+
+REGLA 33: A 'Radiologist' must not participate in any 'Allergy_Unspecified' related activities.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p33a", "predicate": "aActor", "type": "atomic", "concept": "Radiologist"},
+  {"id": "p33b", "predicate": "aActivity", "type": "atomic", "concept": "Allergy_Unspecified"}
+]
+FÓRMULA:
+G !(p33a & p33b)
+------------------------------------------------------------------
+
+REGLA 34: If 'Clinical_System' triggers 'Age_Guard', the 'result' attribute must be 'boolean'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p34a", "predicate": "aActor", "type": "atomic", "concept": "Clinical_System"},
+  {"id": "p34b", "predicate": "aActivity", "type": "atomic", "concept": "Age_Guard"}
+]
+FÓRMULA:
+G x.( (p34a & p34b) -> "(x)isinstance(x[p34b]['result'], bool)" )
+------------------------------------------------------------------
+
+REGLA 35: The 'copd' workflow must always contain COPD identification before 'Terminal'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p35a", "predicate": "aWorkflow", "type": "atomic", "concept": "copd"},
+  {"id": "p35b", "predicate": "aActivity", "type": "atomic", "concept": "Potential_COPD_Smoker"},
+  {"id": "p35c", "predicate": "aActivity", "type": "atomic", "concept": "Potential_COPD_Nonsmoker"},
+  {"id": "p35d", "predicate": "aActionType", "type": "atomic", "concept": "at_Terminal"}
+]
+FÓRMULA:
+G (p35a -> ( (!p35d) U (p35b | p35c) ))
+------------------------------------------------------------------
+
+REGLA 36: If 'at_CallSubmodule' for 'Drug_Allergy', then 'at_CarePlanStart' cannot happen in the next 3 states.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p36a", "predicate": "aActionType", "type": "atomic", "concept": "at_CallSubmodule"},
+  {"id": "p36b", "predicate": "aActionType", "type": "atomic", "concept": "at_CarePlanStart"}
+]
+FÓRMULA:
+G x.( (p36a & "(x)x[p36a]['submodule'] == 'Drug_Allergy'") -> (X !p36b & X X !p36b & X X X !p36b) )
+------------------------------------------------------------------
+
+REGLA 37: 'End_Allergist_Initial_Visit' must be performed by the same 'Physician' who started it.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p37a", "predicate": "aActivity", "type": "atomic", "concept": "Allergist_Initial_Visit"},
+  {"id": "p37b", "predicate": "aActivity", "type": "atomic", "concept": "End_Allergist_Initial_Visit"},
+  {"id": "p37c", "predicate": "aActor", "type": "atomic", "concept": "Physician"}
+]
+FÓRMULA:
+G x.( (p37a & p37c) -> F y.( p37b & "(x,y)y[p37b]['actor_id'] == x[p37a]['actor_id']" ) )
+------------------------------------------------------------------
+
+REGLA 38: In 'fibromyalgia' workflow, 'Initial' must be followed by at least three 'at_Simple' events.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p38a", "predicate": "aWorkflow", "type": "atomic", "concept": "fibromyalgia"},
+  {"id": "p38b", "predicate": "aActivity", "type": "atomic", "concept": "Initial"},
+  {"id": "p38c", "predicate": "aActionType", "type": "atomic", "concept": "at_Simple"}
+]
+FÓRMULA:
+G ( (p38a & p38b) -> X (p38c & X (p38c & X p38c)) )
+------------------------------------------------------------------
+
+REGLA 39: If 'Care_Manager' is the actor, the activity must be 'General_Allergy_CarePlan' or 'Delay_For_Atopy'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p39a", "predicate": "aActor", "type": "atomic", "concept": "Care_Manager"},
+  {"id": "p39b", "predicate": "aActivity", "type": "atomic", "concept": "General_Allergy_CarePlan"},
+  {"id": "p39c", "predicate": "aActivity", "type": "atomic", "concept": "Delay_For_Atopy"}
+]
+FÓRMULA:
+G ( p39a -> (p39b | p39c) )
+------------------------------------------------------------------
+
+REGLA 40: 'at_Procedure' with 'cost > 500' must be authorized by 'Practitioner' and not 'Clinical_System'.
+------------------------------------------------------------------
+PROPOSICIONES:
+[
+  {"id": "p40a", "predicate": "aActionType", "type": "atomic", "concept": "at_Procedure"},
+  {"id": "p40b", "predicate": "aActor", "type": "atomic", "concept": "Practitioner"},
+  {"id": "p40c", "predicate": "aActor", "type": "atomic", "concept": "Clinical_System"}
+]
+FÓRMULA:
+G x.( (p40a & "(x)x[p40a]['cost'] > 500") -> (p40b & !p40c) )
+------------------------------------------------------------------
+
 --- SYSTEM INTEGRITY & ERROR STATES ---
 
-41. If 'x[#] > 100', the trace is too long and must trigger a 'Terminal' state within the next 5 events.
-42. If 'at_Delay' duration is negative, the system must transition to 'Terminal' and flag a data error.
-43. A trace is invalid if it contains 'Female' and the SNOMED code for 'Prostate Cancer' (simultaneous).
-44. If 'sModelReference' is null, the 'at_ActionType' cannot be 'at_Procedure'.
-45. Every 'at_Encounter' must have a 'room_number' attribute that is a 'number' between 1 and 500.
-46. If 'x[V] == 0' (vital sign zero), the 'at_Simple' activity must be followed by an emergency 'at_CallSubmodule'.
-47. If 'at_Initial' is not followed by any other activity, the 'Terminal' event must be executed by 'Clinical_System'.
-48. Any 'gSnomed' concept under the '363787002' (Observable entity) hierarchy must have a 'unit' attribute (e.g., 'mmHg').
-49. If 'Allergy_Panel' results in 'Atopic', the 'atopy_index' attribute must be greater than 0.75.
-50. If the 'workflow' is 'dermatitis', the activity 'Prescribe_Epipen' is strictly forbidden.
+41. Si el historial clínico supera los 100 registros, la traza se considera saturada y debe finalizarse obligatoriamente en un máximo de 5 eventos.
+
+42. Si se registra una duración negativa en un retardo, el sistema debe saltar al estado de cierre y marcar un error de integridad en los datos.
+
+43. Una traza se considera inválida si registra simultáneamente el sexo femenino y un código SNOMED de cáncer de próstata.
+
+44. Ningún procedimiento es válido si en su registro de propiedades falta el identificador de la instalación para el seguimiento de la ubicación.
+
+45. Todo encuentro clínico debe tener asignado un número de sala que sea un valor numérico situado entre 1 y 500.
+
+46. Si se registra un valor de cero en una constante vital, se debe activar inmediatamente un sub-módulo de emergencia tras dicha medición.
+
+47. Si tras el evento inicial no se registra ninguna otra actividad, el propio sistema clínico debe ejecutar el cierre del proceso.
+
+48. Cualquier concepto SNOMED de la jerarquía de "Entidad Observable" debe incluir obligatoriamente su unidad de medida (como mmHg).
+
+49. Si el panel de alergias da un resultado de "Atópico", el índice de atopia registrado debe ser superior a 0.75.
+
+50. Dentro del flujo de trabajo de dermatitis, la actividad de prescribir Epipen está estrictamente prohibida.

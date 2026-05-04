@@ -197,9 +197,9 @@ def generate_smart_ask(concept_id: str, role: str) -> str:
 
     if has_subclasses:
         return f"""
-PREFIX snomed: &lt;http://snomed.info/id/&gt;
-PREFIX rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
-PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
+PREFIX snomed: http://snomed.info/id/;
+PREFIX rdfs: http://www.w3.org/2000/01/rdf-schema#;
+PREFIX skos: http://www.w3.org/2004/02/skos/core#;
 
 ASK {{
     ?patient snomed:{relation}/(rdfs:subClassOf|skos:broader)* snomed:{concept_id} .
@@ -207,7 +207,7 @@ ASK {{
 """
     else:
         return f"""
-PREFIX snomed: &lt;http://snomed.info/id/&gt;
+PREFIX snomed: http://snomed.info/id/;
 
 ASK {{
     ?patient snomed:{relation} snomed:{concept_id} .
