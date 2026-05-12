@@ -1,0 +1,103 @@
+{
+  "395142003": {
+    "label": "Allergy screening test",
+    "synonyms": [
+      "Allergy screening test (procedure)"
+    ]
+  },
+  "386053000": {
+    "label": "Evaluation procedure",
+    "synonyms": [
+      "Assessment",
+      "Evaluation procedure (procedure)",
+      "Investigations",
+      "Determination of a value, conclusion, or inference by evaluating evidence"
+    ]
+  },
+  "128927009": {
+    "label": "Procedure by method",
+    "synonyms": [
+      "Procedure by method (procedure)"
+    ]
+  },
+  "71388002": {
+    "label": "Procedure",
+    "synonyms": [
+      "Procedure (procedure)"
+    ]
+  },
+  "609328004": {
+    "label": "Allergic disposition",
+    "synonyms": [
+      "The disposition to develop an allergic reaction.",
+      "A propensity to developing a pathological immune process generally directed towards a foreign antigen, which results in tissue injury. It is most often applied to type I hypersensitivity but other hypersensitivity types especially type IV (e.g. allergic contact dermatitis) may be involved. Revised nomenclature for allergy for global use:Report of the Nomenclature Review Committee of the World Allergy Organization, October 2003.",
+      "Allergic disposition (finding)",
+      "Allergy"
+    ]
+  },
+  "609433001": {
+    "label": "Hypersensitivity disposition",
+    "synonyms": [
+      "A propensity to developing an adverse reaction upon exposure to an agent at a dose otherwise tolerated by normal individuals. Revised nomenclature for allergy for global use:Report of the Nomenclature Review Committee of the World Allergy Organization, October 2003.",
+      "Hypersensitivity disposition (finding)",
+      "The disposition to develop hypersensitivity.",
+      "The disposition to develop an allergic or pseudoallergic reaction."
+    ]
+  },
+  "420134006": {
+    "label": "Propensity to adverse reaction",
+    "synonyms": [
+      "Propensity to adverse reaction (finding)",
+      "Propensity to adverse reactions"
+    ]
+  },
+  "404684003": {
+    "label": "Clinical finding",
+    "synonyms": [
+      "Clinical finding (finding)"
+    ]
+  },
+  "473010000": {
+    "label": "Hypersensitivity condition",
+    "synonyms": [
+      "Hypersensitivity condition (finding)",
+      "The disposition to develop an allergic or pseudoallergic reaction, the reaction itself or its consequences.",
+      "The disposition to develop hypersensitivity or the manifestation of such a disposition."
+    ]
+  },
+  "473011001": {
+    "label": "Allergic condition",
+    "synonyms": [
+      "Allergic condition (finding)",
+      "The disposition to develop an allergic reaction, the allergic reaction itself or its consequences."
+    ]
+  },
+  "384758001": {
+    "label": "Self-care interventions",
+    "synonyms": [
+      "Personal care treatments and procedures",
+      "Self-care interventions (procedure)",
+      "Personal care"
+    ]
+  },
+  "282260003": {
+    "label": "Activity of daily living procedures and interventions",
+    "synonyms": [
+      "Activities of daily living (ADLS) treatment",
+      "Activity of daily living procedures and interventions (procedure)"
+    ]
+  },
+  "185347001": {
+    "label": "Encounter for problem",
+    "synonyms": [
+      "Encounter for problem (procedure)"
+    ]
+  },
+  "308335008": {
+    "label": "Patient encounter procedure",
+    "synonyms": [
+      "An interaction between a patient and a healthcare provider for the purpose of the provision of healthcare services to the patient.",
+      "Patient encounter procedure (procedure)"
+    ]
+  }
+}

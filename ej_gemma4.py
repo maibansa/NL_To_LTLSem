@@ -255,6 +255,8 @@ if __name__ == "__main__":
         "Allergy_Panel & Practitioner or Not_Atopic ", 
         "Always Allergy_Panel implies that in the future Practitioner if and only if next  Delay_For_Atopy",
         "Always Allergy_Panel implies that in the future Practitioner if and only if next Delay_For_Atopy and in the past Food_Allergy_Incidence_Submodule and the time between the first and last instances is less that two hours",
+        "Always if an event x verifies Allergy_Panel this implies that in the future there is a point y verifies Practitioner if and only if next Delay_For_Atopy and in the past Food_Allergy_Incidence_Submodule and the time between x and y is less that 2 hours"
+
         
        
       ]

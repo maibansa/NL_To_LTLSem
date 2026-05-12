@@ -5,94 +5,139 @@ CRITICAL ARCHITECTURAL REQUIREMENT: THREE-LAYER SEPARATION
 ==================================================================
 You MUST strictly separate the extraction into two independent layers before generating the JSON:
 
-    THE DOMAIN SEMANTIC LAYER (The "What"):
-    Extract clinical concepts into a flat list of 'propositions'.
-    You MUST use LogSchemaOntology to choose predicates.
-    List of tActivity: Administer_Allergy_Test, Age_Guard, Allergist_Guard, Allergist_Initial_Visit, Allergy_Panel, Allergy_Unspecified, Atopic, Delay_For_Allergist_Initial_Visit, Delay_For_Atopy, Delay_For_Smoking_History, Drug_Allergy_Incidence_Submodule, End_Allergist_Initial_Visit, Environmental_Allergy_Incidence_Submodule, Female, Food_Allergy_Incidence_Submodule, General_Allergy_CarePlan, Immunotherapy_Submodule, Initial, Living_With_Allergies, Male, No_Infection, Not_Atopic, Potential_COPD_Nonsmoker, Potential_COPD_Smoker, Prescribe_Epipen, Prescribe_OTC_Antihistamine, Terminal.
-    List of tActor: Care_Manager, Clinical_System, Lab_Technician, Pharmacist, Physician, Practitioner, Radiologist.
+    THE DOMAIN SEMANTIC LAYER (The "What"):
+    Extract clinical concepts into a flat list of 'propositions'.
+   
+    List of tActivity: Administer_Allergy_Test, Age_Guard, Allergist_Guard, Allergist_Initial_Visit, Allergy_Panel, Allergy_Unspecified, Atopic, Delay_For_Allergist_Initial_Visit, Delay_For_Atopy, Delay_For_Smoking_History, Drug_Allergy_Incidence_Submodule, End_Allergist_Initial_Visit, Environmental_Allergy_Incidence_Submodule, Female, Food_Allergy_Incidence_Submodule, General_Allergy_CarePlan, Immunotherapy_Submodule, Initial, Living_With_Allergies, Male, No_Infection, Not_Atopic, Potential_COPD_Nonsmoker, Potential_COPD_Smoker, Prescribe_Epipen, Prescribe_OTC_Antihistamine, Terminal.
+    List of tActor: Care_Manager, Clinical_System, Lab_Technician, Pharmacist, Physician, Practitioner, Radiologist.
 
-    List of aActionType: at_AllergyOnset, at_CallSubmodule,at_CarePlanStart,at_Delay,at_Encounter,at_EncounterEnd,at_Guard,at_Initial,at_MedicationOrder,at_Procedure,at_Simple,at_Terminal
+    List of aActionType: at_AllergyOnset, at_CallSubmodule,at_CarePlanStart,at_Delay,at_Encounter,at_EncounterEnd,at_Guard,at_Initial,at_MedicationOrder,at_Procedure,at_Simple,at_Terminal
 
-    List of aWorflow: allergies, appendicitis, asthma, breast_cancer,colorectal_cancer,copd,dermatitis,ear_infections,epilepsy,fibromyalgia
+    List of aWorflow: allergies, appendicitis, asthma, breast_cancer,colorectal_cancer,copd,dermatitis,ear_infections,epilepsy,fibromyalgia
 
-    THE FORMULA LAYER (The "When" and "How"):
-    
-    You MUST represent the logical and temporal structure recursively in the formula field using ONLY these patterns:
+    List of labels corresponding to atomic propositions: Activity | ActionType | Workflow 
+    
+    List of labels corresponding to non-atomic propositions: Timestamp | Actor
 
-        Atomic: Use the proposition ID string (e.g., "p1").
+    List of labels corresponding to graph propositions: Snomed
+    
+    THE FORMULA LAYER (The "When" and "How"):
+    
+    You MUST represent the logical and temporal structure recursively in the formula field using ONLY these patterns:
 
-        LTL Ontology:
+        Atomic: Use the proposition ID string (e.g., "p1").
 
-        Logig Operators: 
-        ! f     NOT f
-        f | g   f OR g
-        f & g   f AND g
-        f -> g  If f then g
-        f <-> g f if and only if g
+        LTL Ontology:
 
-        LTL Operators:
-        G f     Always 'f' (Globally, future)
-        H f     'f' happens for every past state (Historical Always)
-        F f     Eventually 'f' will happen (Future)
-        O f     'f' happened in the past (Once)
-        X f     'f' happens at the Next event (False for the last event)
-        Y f     'f' happened at the previous event (False for the first event)
-        f U g   'f' happens Until 'g' is met
-        f S g   'g' happens Since 'f' happened
+        Logig Operators: 
+        ! f     NOT f
+        f | g   f OR g
+        f & g   f AND g
+        f -> g  If f then g
+        f <-> g f if and only if g
 
-    
+        LTL Operators:
+        G f     Always 'f' (Globally, future)
+        H f     'f' happens for every past state (Historical Always)
+        F f     Eventually 'f' will happen (Future)
+        O f     'f' happened in the past (Once)
+        X f     'f' happens at the Next event (False for the last event)
+        Y f     'f' happened at the previous event (False for the first event)
+        f U g   'f' happens Until 'g' is met
+        f S g   'g' happens Since 'f' happened
+
+    
 
 
 FREEZE OPERATOR
-The freeze operator binds the value of a non-atomic attribute at a specific trace position to a variable (z) for use in a sub-formula.
+The freeze operator binds the value of a non-atomic attribute at a specific trace position to a variable (x,y,z...) for use in a sub-formula.
 
-Syntax: z.(<formula>)
+Syntax: x.(<formula>)
 Variable: Any value in the range a-z can be used as the identifier.
 - Examples:
-      F a & x.("(x)x[V]<=34+7")
-      F x.("(x)x[p]['b']==22")
-      F x.("(x)x[p]['a']>0")
-      F x.("(x)x[p]['a']>9")
-      F x.("(x)'z' in x[att]")
-      F x.(b & "(x)    x[p]['a']>9")
-      a | b & x.("(x)x[V]==4 or x[V]==2")
-      F b & x.(F y.(a & "(x,y)x[V]==y[V]"))
-      F ((a | b) & z.((X false) & "(z)z[#] == 2"))
-      F ((a | b) & z.((X false) & F y.("(z,y)z[#] == y[#]")))
-      F x.(b & "(x)PROP.IN_DIC(x[p],'b',22)")
-      F x.(b & "(x)PROP.IN_DIC_2(x,p,'b',22)")
+      F a & x.("(x)x[V]<=34+7") where x is a freeze variable, a is one of the labels corresponding to atomic propositions and V is one of the labels of attributes that are non-atomic propositions. "(x)x[V]<=34+7"  is a kind of lambda definition containing the list of variables (x) and python code that has to be translated as it is
+      a | b & x.("(x)x[H]==4 or x[H]==2") where x is a freeze variable, a and b are labels corresponding to atomic propositions and H is one of the labels of attributes that are non-atomic propositions. 
+      F b & x.(F y.(a & "(x,y)x[V]==y[V]"))
+      F ((a | b) & x.((X false) & "(x)x[#] == 2"))  being x a freeze variable, x[#] evaluates to the position of the event in the trace, starting at position 1
+      F x.(X F  y.("(x,y)x[#] + 8 == y[#]"))
+ 
 
-#Note 1: when using freeze variables, for instance 'x', to refer to specific 
-#        events the way to get access to the attributes will by means of expressions
-#        of the form "x[<attribute_name>]", a in the example before.
+Note 1: when using freeze variables, for instance 'x', to refer to specific 
+        events the way to get access to the attributes will by means of expressions
+        of the form "x[<attribute_name>]" or "x[#]".   
 
-#Note 2: By default, "my_propositions.py" is imported at booting time as "PROP". 
-#        This file is the place to write the Python functions used in the non-atomic propositions.
-#        In the examples, we are assuming that both, "IN_DIC" and "IN_DIC_2"
-#        are defined in "my_propositions.py". Add this funcions in the json.
-
-Note 3: In formulas like F x.("(x)x[p]['b']==22"), p can be only a predicate (gSnomed | aActivity | aActionType | aWorkflow | aActor) non-atomic and non-graph proposition.
+Note 2: By default, "my_propositions.py" is imported at booting time as "PROP". 
+        This file is the place to write the Python functions used in the non-atomic propositions.
+        
+Note 3: In the domain of a freeze variable, a string of the form "(list_of_freeze_names)python_code" is a kind of lambda definition, that has to be translated as it is
+ 
 ==================================================================
 
 NEVER mix clinical concepts into temporalStructure, and NEVER mix temporal constraints into propositions.
 ==================================================================
 
 - CANONICAL TIME NORMALIZATION (REQUIRED):
- If a temporal bound is mentioned, convert it to seconds
+ If a temporal bound is mentioned, convert it to seconds
 ==================================================================
- - ABOUT DOMAIN SEMANTICS
+ - ABOUT DOMAIN SEMANTICS
 
-gSnomed propositions always are of type graph and in the formula you must include PROP.concept_name(x,y,..) where x,y ... are freeze variables and different worlds of concept_name must include _ in the spaces 
+#Snomed propositions always are of type graph and in the formula you must include "PROP.concept_name(x[snomed],y[snomed],..)" where x,y ... are freeze variables and different worlds of concept_name must include _ in the spaces  This must be a string of the form "(list_of_freeze_names)python_code" 
+All SNOMED propositions are graph type. Use this exact string-lambda pattern:
+var.("(var)PROP.Concept_Name(var[Snomed])")
+
+    Rule 1: NEVER use (x). ALWAYS use (x[Snomed]).
+
+    Rule 2: Spaces in concepts must be underscores: PROP.Latex_Allergy.
+
+    Correct Example: x.("(x)PROP.Asthma(x[Snomed])")
 
 ==================================================================
 
-### REFERENCE ONTOLOGIES
-#1) LTL Ontology:
-#{onto_logic}
 
-#2) Log Ontology:
-{onto_semantic}
+This is a grammar for the correct formulas:
+Precedence (low → high):
+->, <->
+&
+|
+U, S
+F, O
+G, H
+X, Y
+!
 
+Terminals:
+CHAR      ::= [a-z]
+ID        ::= [a-zA-Z_][a-zA-Z_0-9]*
+
+Productions:
+list_of_vars ::=
+      '('')'
+    | '(' CHAR (',' CHAR)* ')'
+
+body ::= [^\"]+                         #Comment: the "body" is a one line python code
+code_form ::= '"' list_of_vars body '"'
+freeze_form ::= CHAR '.' '(' dltl_form ')'
+
+dltl_form ::= 
+      dltl_form '->' dltl_form
+    | dltl_form '<->' dltl_form
+    | dltl_form '&' dltl_form
+    | dltl_form '|' dltl_form
+    | dltl_form 'U' dltl_form
+    | dltl_form 'S' dltl_form
+    | 'F' dltl_form
+    | 'G' dltl_form
+    | 'H' dltl_form
+    | 'X' dltl_form
+    | 'Y' dltl_form
+    | 'O' dltl_form
+    | '!' dltl_form
+    | '(' dltl_form ')'
+    | freeze_form
+    | code_form
+    | ID
+    | 'true'
+    | 'false'
 
 Return ONLY valid JSON based on this template:
 
@@ -100,146 +145,18 @@ Return ONLY valid JSON based on this template:
 "propositions": [
 {{
 "id": "p1",
-"predicate": "gSnomed | aActivity | aActionType | aWorkflow | aActor",
-"type": "graph | atomic | string | number | boolean",
-"concept": "Name_From_List"
+"predicate":  
+"type": "graph",
+"concept": "concept_name"
 }}
 ],
 "formula":
-"p1"
-| {{
+{{
 
 }}
-
-### CLINICAL RULES:  
-
-41. Si el historial clínico supera los 100 registros, la traza se considera saturada y debe finalizarse obligatoriamente en un máximo de 5 eventos.
-
-42. Si se registra una duración negativa en un retardo, el sistema debe saltar al estado de cierre y marcar un error de integridad en los datos.
-
-43. Una traza se considera inválida si registra simultáneamente el sexo femenino y un código SNOMED de cáncer de próstata.
-
-44. Ningún procedimiento es válido si en su registro de propiedades falta el identificador de la instalación para el seguimiento de la ubicación.
-
-45. Todo encuentro clínico debe tener asignado un número de sala que sea un valor numérico situado entre 1 y 500.
-
-46. Si se registra un valor de cero en una constante vital, se debe activar inmediatamente un sub-módulo de emergencia tras dicha medición.
-
-47. Si tras el evento inicial no se registra ninguna otra actividad, el propio sistema clínico debe ejecutar el cierre del proceso.
-
-48. Cualquier concepto SNOMED de la jerarquía de "Entidad Observable" debe incluir obligatoriamente su unidad de medida (como mmHg).
-
-49. Si el panel de alergias da un resultado de "Atópico", el índice de atopia registrado debe ser superior a 0.75.
-
-50. Dentro del flujo de trabajo de dermatitis, la actividad de prescribir Epipen está estrictamente prohibida.
-
-==================================================================
-RESULTADO DE COMPILACIÓN DE REGLAS CLÍNICAS (41-50)
-==================================================================
-
-41. Si el historial clínico supera los 100 registros, la traza se considera saturada y debe finalizarse obligatoriamente en un máximo de 5 eventos.
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p41", "predicate": "aActionType", "type": "atomic", "concept": "at_Terminal"}
-]
-FÓRMULA:
-G x.("(x)x[#] > 100" -> (X p41 | X X p41 | X X X p41 | X X X X p41 | X X X X X p41))
-------------------------------------------------------------------
-
-42. Si se registra una duración negativa en un retardo, el sistema debe saltar al estado de cierre y marcar un error de integridad en los datos.
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p42a", "predicate": "aActionType", "type": "atomic", "concept": "at_Delay"},
-  {"id": "p42b", "predicate": "aActionType", "type": "atomic", "concept": "at_Terminal"}
-]
-FÓRMULA:
-G x.((p42a & "(x)x[p42a]['duration'] < 0") -> p42b)
-------------------------------------------------------------------
-
-43. Una traza se considera inválida si registra simultáneamente el sexo femenino y un código SNOMED de cáncer de próstata.
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p43a", "predicate": "aActivity", "type": "atomic", "concept": "Female"},
-  {"id": "p43b", "predicate": "gSnomed", "type": "graph", "concept": "Prostate_cancer"}
-]
-FÓRMULA:
-G x.(!(p43a & PROP.Prostate_cancer(x)))
-------------------------------------------------------------------
-
-44. Ningún procedimiento es válido si en su registro de propiedades falta el identificador de la instalación para el seguimiento de la ubicación.
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p44", "predicate": "aActionType", "type": "atomic", "concept": "at_Procedure"}
-]
-FÓRMULA:
-G x.(p44 -> "(x)'facility_id' in x[p44]")
-------------------------------------------------------------------
-
-45. Todo encuentro clínico debe tener asignado un número de sala que sea un valor numérico situado entre 1 y 500.
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p45", "predicate": "aActionType", "type": "atomic", "concept": "at_Encounter"}
-]
-FÓRMULA:
-G x.(p45 -> "(x)1 <= x[p45]['room_number'] <= 500")
-------------------------------------------------------------------
-
-46. Si se registra un valor de cero en una constante vital, se debe activar inmediatamente un sub-módulo de emergencia tras dicha medición.
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p46a", "predicate": "aActionType", "type": "atomic", "concept": "at_Simple"},
-  {"id": "p46b", "predicate": "aActionType", "type": "atomic", "concept": "at_CallSubmodule"}
-]
-FÓRMULA:
-G x.((p46a & "(x)x[V] == 0") -> X p46b)
-------------------------------------------------------------------
-
-47. Si tras el evento inicial no se registra ninguna otra actividad, el propio sistema clínico debe ejecutar el cierre del proceso.
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p47a", "predicate": "aActionType", "type": "atomic", "concept": "at_Initial"},
-  {"id": "p47b", "predicate": "aActionType", "type": "atomic", "concept": "at_Terminal"},
-  {"id": "p47c", "predicate": "aActor", "type": "atomic", "concept": "Clinical_System"}
-]
-FÓRMULA:
-G ((p47a & X p47b) -> p47c)
-------------------------------------------------------------------
-
-48. Cualquier concepto SNOMED de la jerarquía de "Entidad Observable" debe incluir obligatoriamente su unidad de medida (como mmHg).
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p48", "predicate": "gSnomed", "type": "graph", "concept": "Observable_entity"}
-]
-FÓRMULA:
-G x.(PROP.Observable_entity(x) -> "(x)'unit' in x[p48]")
-------------------------------------------------------------------
-
-49. Si el panel de alergias da un resultado de "Atópico", el índice de atopia registrado debe ser superior a 0.75.
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p49a", "predicate": "aActivity", "type": "atomic", "concept": "Allergy_Panel"},
-  {"id": "p49b", "predicate": "aActivity", "type": "atomic", "concept": "Atopic"}
-]
-FÓRMULA:
-G x.((p49a & p49b) -> "(x)x[p49a]['atopy_index'] > 0.75")
-------------------------------------------------------------------
-
-50. Dentro del flujo de trabajo de dermatitis, la actividad de prescribir Epipen está estrictamente prohibida.
-------------------------------------------------------------------
-PROPOSICIONES:
-[
-  {"id": "p50a", "predicate": "aWorkflow", "type": "atomic", "concept": "dermatitis"},
-  {"id": "p50b", "predicate": "aActivity", "type": "atomic", "concept": "Prescribe_Epipen"}
-]
-FÓRMULA:
-G (p50a -> !p50b)
-------------------------------------------------------------------
+"formula2":
+{{
+formula where propositions p1, p2... (only propositions) has been replaced by the corresponding concepts.  PROP.concept_name  must not be replaced.
+}}
+### CLINICAL RULES:  
+If a 'snomed' reference to 'Asthma' is true, then 'at_AllergyOnset' is mandatory.

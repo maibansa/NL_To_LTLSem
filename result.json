@@ -1,0 +1,353 @@
+[
+  {
+    "id": "r1",
+    "sentence": "If a 'snomed' reference to 'Asthma' is true, then 'at_AllergyOnset' is mandatory.",
+    "formula": "G (x.(\"(x)PROP.Asthma(x[Snomed])\") -> at_AllergyOnset)"
+  },
+  {
+    "id": "r2",
+    "sentence": "In the breast_cancer workflow, any medication order must be cross-referenced against the 'Inhaled steroid therapy' SNOMED hierarchy.",
+    "formula": "G ((breast_cancer & at_MedicationOrder) -> x.(\"(x)PROP.Inhaled_steroid_therapy(x[Snomed])\"))"
+  },
+  {
+    "id": "r3",
+    "sentence": "If the 'clinicalCode' in 'Allergy_Panel' is a 'snomed' reference 'SCTID: 252325008', then the actor must be a 'Practitioner' with specialization in 'Gynecology service'.",
+    "formula": "G ((Allergy_Panel & SCTID_252325008) -> (Practitioner & x.(\"(x)PROP.Gynecology_service(x[Snomed])\")))"
+  },
+  {
+    "id": "r4",
+    "sentence": "If 'Potential_COPD_Smoker' is identified, the next state must include a 'Snomed' code related to 'Smoking cessation therapy'.",
+    "formula": "G (Potential_COPD_Smoker -> X x.(\"(x)PROP.Smoking_cessation_therapy(x[Snomed])\"))"
+  },
+  {
+    "id": "r5",
+    "sentence": "Every 'at_AllergyOnset' event must be linked to a 'Snomed' concept representing a clinical manifestation (e.g., 'Atopic dermatitis').",
+    "formula": "G (at_AllergyOnset -> x.(\"(x)PROP.Atopic_dermatitis(x[Snomed])\"))"
+  },
+  {
+    "id": "r6",
+    "sentence": "If 'Drug_Allergy_Incidence_Submodule' is active, any 'at_MedicationOrder' must contain a valid SNOMED hierarchy code for 'Administration of intravenous fluids'.",
+    "formula": "G (Drug_Allergy_Incidence_Submodule -> (at_MedicationOrder -> x.(\"(x)PROP.Administration_of_intravenous_fluids(x[Snomed])\")))"
+  },
+  {
+    "id": "r7",
+    "sentence": "A trace cannot contain a 'Snomed' for 'Malignant neoplasm of breast' if the 'Allergist_Guard' recorded a 'False' outcome.",
+    "formula": "G (Allergist_Guard -> (! (x.(\"(x)PROP.Malignant_neoplasm_of_breast(x[Snomed])\"))))"
+  },
+  {
+    "id": "r8",
+    "sentence": "Ensure that when an Epipen is prescribed, the system validates the clinical nature via 'Snomed' reference to 'Allergic disposition'.",
+    "formula": "G (Prescribe_Epipen -> x.(\"(x)PROP.Allergic_disposition(x[Snomed])\"))"
+  },
+  {
+    "id": "r9",
+    "sentence": "Whenever 'Administer_Allergy_Test' is executed, it must eventually be followed by a 'Snomed' finding of either 'Asthma screening' or 'Allergy screening test'.",
+    "formula": "G (Administer_Allergy_Test -> F (x.(\"(x)PROP.Asthma_screening(x[Snomed])\") | x.(\"(x)PROP.Allergy_screening_test(x[Snomed])\")))"
+  },
+  {
+    "id": "r10",
+    "sentence": "If 'Allergy_Unspecified' occurs, the event must contain a 'Snomed' reference to the concept 'Contact dermatitis'.",
+    "formula": "G (Allergy_Unspecified -> x.(\"(x)PROP.Contact_dermatitis(x[Snomed])\"))"
+  },
+  {
+    "id": "r11",
+    "sentence": "Si se realiza un Administer_Allergy_Test (x), el siguiente evento Allergy_Panel (y) debe ser ejecutado por el mismo actor que realizó la prueba inicial.",
+    "formula": "G (Administer_Allergy_Test & x.(X (Allergy_Panel & y.(\"(x,y)x[Actor] == y[Actor]\"))))"
+  },
+  {
+    "id": "r12",
+    "sentence": "Si ocurre una Allergist_Initial_Visit (x), el evento End_Allergist_Initial_Visit (y) debe cumplir que y[Timestamp] - x[Timestamp] < 3600.",
+    "formula": "G (Allergist_Initial_Visit & x.(F (End_Allergist_Initial_Visit & y.(\"(x,y)y[Timestamp] - x[Timestamp] < 3600\"))))"
+  },
+  {
+    "id": "r13",
+    "sentence": "Si se inicia el Drug_Allergy_Incidence_Submodule (x), la actividad General_Allergy_CarePlan (y) debe ocurrir exactamente en la posición x[#] + 3.",
+    "formula": "G (Drug_Allergy_Incidence_Submodule & x.(F (General_Allergy_CarePlan & y.(\"(x,y)y[#] == x[#] + 3\"))))"
+  },
+  {
+    "id": "r14",
+    "sentence": "Tras el evento Initial (x), cualquier at_Procedure (y) posterior debe tener un x[Timestamp] < y[Timestamp].",
+    "formula": "G (Initial & x.(G (at_Procedure -> y.(\"(x,y)x[Timestamp] < y[Timestamp]\"))))"
+  },
+  {
+    "id": "r15",
+    "sentence": "Si un Physician realiza la Allergist_Initial_Visit (x), todos los eventos at_MedicationOrder (y) posteriores deben ser realizados por ese mismo actor.",
+    "formula": "G (Physician & Allergist_Initial_Visit & x.(G (at_MedicationOrder -> y.(\"(x,y)x[Actor] == y[Actor]\"))))"
+  },
+  {
+    "id": "r16",
+    "sentence": "Si ocurren Environmental_Allergy_Incidence_Submodule (x) y Food_Allergy_Incidence_Submodule (y), el timestamp de x debe ser menor al de y.",
+    "formula": "G (Environmental_Allergy_Incidence_Submodule & x.(F (Food_Allergy_Incidence_Submodule & y.(\"(x,y)x[Timestamp] < y[Timestamp]\"))))"
+  },
+  {
+    "id": "r17",
+    "sentence": "Si un Practitioner inicia un at_Encounter (x), el evento at_Terminal (y) de esa traza debe tener un actor diferente al del inicio.",
+    "formula": "G (Practitioner & at_Encounter & x.(F (at_Terminal & y.(\"(x,y)x[Actor] != y[Actor]\"))))"
+  },
+  {
+    "id": "r18",
+    "sentence": "Si se registra el estado Atopic (x), el evento Prescribe_OTC_Antihistamine (y) debe ocurrir antes de que la posición sea y[#] > x[#] + 10.",
+    "formula": "G (Atopic & x.(F (Prescribe_OTC_Antihistamine & y.(\"(x,y)y[#] <= x[#] + 10\"))))"
+  },
+  {
+    "id": "r19",
+    "sentence": "Si el Clinical_System ejecuta una at_Guard (x), el siguiente evento at_Delay (y) debe ser gestionado por el mismo actor.",
+    "formula": "G (Clinical_System & at_Guard & x.(X (at_Delay & y.(\"(x,y)x[Actor] == y[Actor]\"))))"
+  },
+  {
+    "id": "r20",
+    "sentence": "Ninguna actividad de Immunotherapy_Submodule (y) puede tener una posición y[#] menor a la posición del evento Allergy_Panel (x).",
+    "formula": "G (Immunotherapy_Submodule & y.(O (Allergy_Panel & x.(\"(x,y)x[#] < y[#]\"))))"
+  },
+
+  {
+    "id": "r21",
+    "sentence": "Always, if 'at_AllergyOnset' happens, the patient must be 'Atopic' within 7200 seconds or the care plan is void.",
+    "formula": "G (at_AllergyOnset -> x.(F (Atopic & y.(\"(x,y)y[Timestamp] - x[Timestamp] <= 7200\"))))"
+  },
+  {
+    "id": "r22",
+    "sentence": "After 'Allergist_Initial_Visit' starts, the patient must remain in the 'Encouter' state until 'at_EncounterEnd' is explicitly called.",
+    "formula": "G (Allergist_Initial_Visit -> (at_Encounter U at_EncounterEnd))"
+  },
+  {
+    "id": "r23",
+    "sentence": "If 'Prescribe_Epipen' occurs, it must be the case that 'Administer_Allergy_Test' happened at least once since the last 'Initial' event.",
+    "formula": "G (Prescribe_Epipen -> (Administer_Allergy_Test S Initial))"
+  },
+  {
+    "id": "r24",
+    "sentence": "It is globally true that 'Delay_For_Atopy' cannot be followed by 'Not_Atopic' in the immediate next state.",
+    "formula": "G (Delay_For_Atopy -> ! X Not_Atopic)"
+  },
+  {
+    "id": "r25",
+    "sentence": "Once 'Living_With_Allergies' becomes true, it must stay true until 'Terminal' happens (No recovery path).",
+    "formula": "G (Living_With_Allergies -> (Living_With_Allergies U Terminal))"
+  },
+  {
+    "id": "r26",
+    "sentence": "If 'Delay_For_Allergist_Initial_Visit' happens, 'Allergist_Initial_Visit' must occur eventually, but not before 86400 seconds (24h).",
+    "formula": "G (Delay_For_Allergist_Initial_Visit -> x.(F (Allergist_Initial_Visit & y.(\"(x,y)y[Timestamp] - x[Timestamp] >= 86400\"))))"
+  },
+  {
+    "id": "r27",
+    "sentence": "'Initial' must be the first event (x) such that there is no previous event (Y false).",
+    "formula": "Initial & (Y !true)"
+  },
+  {
+    "id": "r28",
+    "sentence": "If 'Immunotherapy_Submodule' is called, it must be preceded by 'Allergy_Panel' within a window of exactly 30 days (2592000s).",
+    "formula": "G ((at_CallSubmodule & Immunotherapy_Submodule) -> x.(O (Allergy_Panel & y.(\"(x,y)x[Timestamp] - y[Timestamp] == 2592000\"))))"
+  },
+  {
+    "id": "r29",
+    "sentence": "If 'Potential_COPD_Nonsmoker' occurs, then 'Potential_COPD_Smoker' must never have happened in the past for this trace.",
+    "formula": "G (Potential_COPD_Nonsmoker -> ! O Potential_COPD_Smoker)"
+  },
+  {
+    "id": "r30",
+    "sentence": "Every 'at_Simple' recording (vital signs) must be followed by another 'at_Simple' within 14400 seconds, unless 'Terminal' is reached.",
+    "formula": "G (at_Simple -> (x.(F (at_Simple & y.(\"(x,y)y[Timestamp] - x[Timestamp] <= 14400\")) | F Terminal)))"
+  },
+  {
+    "id": "r21bis",
+    "sentence": "Always, if the onset of the allergy happens, the patient must be atopic within 7200 seconds or the care plan is void.",
+    "formula": "G (at_AllergyOnset -> x.(F y.(Atopic & \"(x,y)y[Timestamp] - x[Timestamp] <= 7200\")))"
+  },
+  {
+    "id": "r22bis",
+    "sentence": "After the initial visit with the allergist starts, the patient must remain in the encounter state until the end of the encounter is explicitly called.",
+    "formula": "G (Allergist_Initial_Visit -> (at_Encounter U at_EncounterEnd))"
+  },
+  {
+    "id": "r23bis",
+    "sentence": "If the prescription of an Epipen occurs, it must be the case that the administration of an allergy test happened at least once since the last initial event.",
+    "formula": "G (Prescribe_Epipen -> (Administer_Allergy_Test S Initial))"
+  },
+  {
+    "id": "r24bis",
+    "sentence": "It is globally true that the delay for atopy cannot be followed by being non-atopic in the immediate next state.",
+    "formula": "G (Delay_For_Atopy -> X (! Not_Atopic))"
+  },
+  {
+    "id": "r25bis",
+    "sentence": "Once living with allergies becomes true, it must stay true until the terminal event happens (No recovery path).",
+    "formula": "G (Living_With_Allergies -> (Living_With_Allergies U Terminal))"
+  },
+  {
+    "id": "r26bis",
+    "sentence": "If the delay for the initial allergist visit happens, the initial visit with the allergist must occur eventually, but not before 86400 seconds (24h).",
+    "formula": "G (Delay_For_Allergist_Initial_Visit -> x.(F y.(Allergist_Initial_Visit & \"(x,y)y[Timestamp] - x[Timestamp] >= 86400\")))"
+  },
+  {
+    "id": "r27bis",
+    "sentence": "The initial event must be the first event such that there is no previous event.",
+    "formula": "Initial & ! Y true"
+  },
+  {
+    "id": "r28bis",
+    "sentence": "If the immunotherapy submodule is called, it must be preceded by the allergy panel within a window of exactly 30 days (2592000s).",
+    "formula": "G (at_CallSubmodule & Immunotherapy_Submodule -> x.(O y.(Allergy_Panel & \"(x,y)x[Timestamp] - y[Timestamp] == 2592000\")))"
+  },
+  {
+    "id": "r29bis",
+    "sentence": "If a potential COPD case in a non-smoker occurs, then a potential COPD case in a smoker must never have happened in the past for this trace.",
+    "formula": "G (Potential_COPD_Nonsmoker -> ! O Potential_COPD_Smoker)"
+  },
+  {
+    "id": "r30bis",
+    "sentence": "Every simple recording of vital signs must be followed by another simple recording of vital signs within 14400 seconds, unless the terminal state is reached.",
+    "formula": "G (at_Simple -> x.(F (Terminal | y.(at_Simple & \"(x,y)y[Timestamp] - x[Timestamp] <= 14400\"))))"
+  },
+  {
+    "id": "r31",
+    "sentence": "If 'Allergist_Guard' is false, the 'allergies' workflow must jump directly to 'General_Allergy_CarePlan' in the next state.",
+    "formula": "G ((allergies & !Allergist_Guard) -> X General_Allergy_CarePlan)"
+  },
+  {
+    "id": "r32",
+    "sentence": "Only a 'Pharmacist' can execute an event with 'at_ActionType = at_MedicationOrder'.",
+    "formula": "G (at_MedicationOrder -> Pharmacist)"
+  },
+  {
+    "id": "r33",
+    "sentence": "A 'Radiologist' must not participate in any 'Allergy_Unspecified' related activities.",
+    "formula": "G (Allergy_Unspecified -> !Radiologist)"
+  },
+  {
+    "id": "r34",
+    "sentence": "Eventually, the Clinical System will trigger the Age_Guard, and in the very next state, a guard-type action (at_Guard) will be executed.",
+    "formula": "F (Clinical_System & Age_Guard & X at_Guard)"
+  },
+  {
+    "id": "r35",
+    "sentence": "The 'copd' workflow must always contain a 'Potential_COPD_Smoker' or 'Potential_COPD_Nonsmoker' activity before 'Terminal'.",
+    "formula": "G (copd -> ( (Potential_COPD_Smoker | Potential_COPD_Nonsmoker) U Terminal))"
+  },
+  {
+    "id": "r36",
+    "sentence": "If 'at_CallSubmodule' is called for 'Drug_Allergy', then 'at_CarePlanStart' must not happen in the next 3 states.",
+    "formula": "G ((at_CallSubmodule & Drug_Allergy_Incidence_Submodule) -> !(X at_CarePlanStart | X X at_CarePlanStart | X X X at_CarePlanStart))"
+  },
+  {
+    "id": "r37",
+    "sentence": "'End_Allergist_Initial_Visit' must be performed by the same 'Physician' who started the visit.",
+    "formula": "G ((Allergist_Initial_Visit & at_Initial) -> x.(F (End_Allergist_Initial_Visit & y.(\"(x,y)x[Actor] == y[Actor] and x[Actor] == 'Physician'\"))))"
+  },
+  {
+    "id": "r38",
+    "sentence": "In 'fibromyalgia' workflow, 'Initial' must be followed by at least three 'at_Simple' events before any diagnosis.",
+    "formula": "G (fibromyalgia -> (Initial -> X (at_Simple & X (at_Simple & X at_Simple))))"
+  },
+  {
+    "id": "r39",
+    "sentence": "If 'Care_Manager' is the actor, the activity must be 'General_Allergy_CarePlan' or 'Delay_For_Atopy'.",
+    "formula": "G (Care_Manager -> (General_Allergy_CarePlan | Delay_For_Atopy))"
+  },
+  {
+    "id": "r40",
+    "sentence": "Any 'at_Procedure' must be authorized by a 'Practitioner' and not by the 'Clinical_System'.",
+    "formula": "G (at_Procedure -> x.(\"(x)x[Actor] == 'Practitioner' and x[Actor] != 'Clinical_System'\"))"
+  },
+  {
+    "id": "r31bis",
+    "sentence": "If the guard for the allergist is false, the allergies workflow must jump directly to the general allergy care plan in the next state.",
+    "formula": "G (! Allergist_Guard & allergies -> X General_Allergy_CarePlan)"
+  },
+  {
+    "id": "r32bis",
+    "sentence": "Only a pharmacist can execute an event related to a medication order.",
+    "formula": "G (at_MedicationOrder -> x.(\"(x)x[Actor] == 'Pharmacist'\"))"
+  },
+  {
+    "id": "r33bis",
+    "sentence": "A radiologist must not participate in any activities related to unspecified allergies.",
+    "formula": "G (Allergy_Unspecified -> x.(\"(x)x[Actor] != 'Radiologist'\"))"
+  },
+  {
+    "id": "r34bis",
+    "sentence": "Eventually, the Clinical System will trigger the Age_Guard, and in the very next state, a guard-type action (at_Guard) will be executed.",
+    "formula": "F (Clinical_System & Age_Guard & X at_Guard)"
+  },
+  {
+    "id": "r35bis",
+    "sentence": "The COPD workflow must always contain either a potential COPD case in a smoker or a potential COPD case in a non-smoker before reaching the terminal state.",
+    "formula": "G (copd -> ( (! Terminal) U (Potential_COPD_Smoker | Potential_COPD_Nonsmoker) ))"
+  },
+  {
+    "id": "r36bis",
+    "sentence": "If a submodule is called for a drug allergy, then the start of a care plan must not happen in the next three states.",
+    "formula": "G (at_CallSubmodule & Drug_Allergy_Incidence_Submodule -> (! X at_CarePlanStart & ! X X at_CarePlanStart & ! X X X at_CarePlanStart))"
+  },
+  {
+    "id": "r37bis",
+    "sentence": "The end of the initial allergist visit must be performed by the same physician who started the visit.",
+    "formula": "G (Allergist_Initial_Visit & Physician & x.(F (End_Allergist_Initial_Visit & Physician & y.("(x,y)x[Actor] == y[Actor]"))))"
+  },
+  {
+    "id": "r38bis",
+    "sentence": "In the fibromyalgia workflow, the initial event must be followed by at least three simple recordings before any diagnosis occurs.",
+    "formula": "G (fibromyalgia & Initial -> X (at_Simple & X (at_Simple & X (at_Simple))))"
+  },
+  {
+    "id": "r39bis",
+    "sentence": "If a care manager is the actor, the activity must be the general allergy care plan or a delay for atopy.",
+    "formula": "G (x.(\"(x)x[Actor] == 'Care_Manager'\") -> (General_Allergy_CarePlan | Delay_For_Atopy))"
+  },
+  {
+    "id": "r40bis",
+    "sentence": "Any procedure must be authorized by a practitioner and not by the clinical system.",
+    "formula": "G (at_Procedure -> x.(\"(x)x[Actor] == 'Practitioner' and x[Actor] != 'Clinical_System'\"))"
+  },
+  {
+    "id": "r41",
+    "sentence": "Si el historial clínico supera los 100 registros, la traza se considera saturada y debe finalizarse obligatoriamente en un máximo de 5 eventos.",
+    "formula": "G (x.(\"(x)x[#] > 100\") -> (F Terminal & !X X X X X X Terminal))"
+  },
+  {
+    "id": "r42",
+    "sentence": "Si se registra una duración negativa en un retardo, el sistema debe saltar al estado de cierre y marcar un error de integridad en los datos.",
+    "formula": "G (at_Delay & x.(\"(x)x[Timestamp] < 0\") -> X Terminal)"
+  },
+{
+  "id": "r43",
+  "sentence": "Si un paciente presenta Chronic obstructive bronchitis, debe haber ocurrido en el pasado un Potential_COPD_Smoker y el actor actual debe ser un Physician.",
+  "formula": "G (x.(\"(x)PROP.Chronic_obstructive_bronchitis(x[Snomed])\") -> (O Potential_COPD_Smoker & y.(\"(y)y[Actor] == 'Physician'\")))"
+},
+  {
+    "id": "r44",
+    "sentence": "Si se ejecuta el procedimiento de \"Administrar Prueba de Alergia\", el sistema debe invocar obligatoriamente el submódulo de \"Panel de Alergias\" en el siguiente paso clínico.",
+    "formula": "G ((Administer_Allergy_Test & at_Procedure) -> X (Allergy_Panel & at_CallSubmodule))"
+  },
+  {
+    "id": "r45",
+    "sentence": "Todo evento marcado con el tipo de estado Encounter debe estar seguido eventualmente por un evento de tipo EncounterEnd antes de que la traza pueda finalizar.",
+    "formula": "G (at_Encounter -> (!at_Terminal U at_EncounterEnd))"
+  },
+  {
+    "id": "r46",
+    "sentence": "Si el sistema registra una guarda (Guard) con la condición de atributo visit_allergist, el siguiente evento no puede ser directamente un cierre de proceso; debe existir al menos un procedimiento intermedio.",
+    "formula": "G ((Allergist_Guard & at_Guard) -> X (!at_Terminal & (!at_Terminal U at_Procedure)))"
+  },
+  {
+    "id": "r47",
+    "sentence": "Si tras el evento inicial no se registra ninguna otra actividad, el propio sistema clínico debe ejecutar el cierre del proceso.",
+    "formula": "G (Initial -> X (Terminal | F !Terminal))"
+  },
+  {
+    "id": "r48",
+    "sentence": "Si se identifica un Malignant neoplasm of colon (Neoplasia maligna de colon), es obligatorio que eventualmente se realice un Colonoscopy (Colonoscopia) y se registre un Cancer care plan (Plan de cuidados de cáncer).",
+    "formula": "G (x.(\"(x)PROP.Malignant_neoplasm_of_colon(x[Snomed])\") -> F (Colonoscopy & F General_Allergy_CarePlan))"
+  },
+  {
+    "id": "r49",
+    "sentence": "En las trazas de flujo de \"Cáncer de Mama\", es obligatorio que tras el evento inicial se ejecute el procedimiento de validación de sexo \"Female\" antes de cualquier snomed intervención quirúrgica o snomed tratamiento.",
+    "formula": "G ((breast_cancer & at_Initial) -> X (!(x.(\"(x)PROP.Surgical_procedure(x)\" | \"(x)PROP.Therapeutic_procedure(x)\")) U Female))"
+  },
+  {
+    "id": "r50",
+    "sentence": "Dentro del flujo de trabajo de dermatitis, la actividad de prescribir Epipen está estrictamente prohibida.",
+    "formula": "G (dermatitis -> !Prescribe_Epipen)"
+  }
+]

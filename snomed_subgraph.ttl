@@ -1,0 +1,90 @@
+@prefix ns1: <http://snomed.info/id/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ns1:185347001 a ns1:Concept ;
+    ns1:is_a ns1:308335008 ;
+    ns1:prefLabel "Encounter for problem" ;
+    skos:altLabel "Encounter for problem (procedure)" .
+
+ns1:384758001 a ns1:Concept ;
+    ns1:is_a ns1:282260003 ;
+    ns1:prefLabel "Self-care interventions" ;
+    skos:altLabel "Personal care",
+        "Personal care treatments and procedures",
+        "Self-care interventions (procedure)" .
+
+ns1:395142003 a ns1:Concept ;
+    ns1:is_a ns1:386053000 ;
+    ns1:prefLabel "Allergy screening test" ;
+    skos:altLabel "Allergy screening test (procedure)" .
+
+ns1:609328004 a ns1:Concept ;
+    ns1:is_a ns1:473011001,
+        ns1:609433001 ;
+    ns1:prefLabel "Allergic disposition" ;
+    skos:altLabel "A propensity to developing a pathological immune process generally directed towards a foreign antigen, which results in tissue injury. It is most often applied to type I hypersensitivity but other hypersensitivity types especially type IV (e.g. allergic contact dermatitis) may be involved. Revised nomenclature for allergy for global use:Report of the Nomenclature Review Committee of the World Allergy Organization, October 2003.",
+        "Allergic disposition (finding)",
+        "Allergy",
+        "The disposition to develop an allergic reaction." .
+
+ns1:128927009 a ns1:Concept ;
+    ns1:is_a ns1:71388002 ;
+    ns1:prefLabel "Procedure by method" ;
+    skos:altLabel "Procedure by method (procedure)" .
+
+ns1:282260003 a ns1:Concept ;
+    ns1:is_a ns1:71388002 ;
+    ns1:prefLabel "Activity of daily living procedures and interventions" ;
+    skos:altLabel "Activities of daily living (ADLS) treatment",
+        "Activity of daily living procedures and interventions (procedure)" .
+
+ns1:308335008 a ns1:Concept ;
+    ns1:is_a ns1:71388002 ;
+    ns1:prefLabel "Patient encounter procedure" ;
+    skos:altLabel "An interaction between a patient and a healthcare provider for the purpose of the provision of healthcare services to the patient.",
+        "Patient encounter procedure (procedure)" .
+
+ns1:386053000 a ns1:Concept ;
+    ns1:is_a ns1:128927009 ;
+    ns1:prefLabel "Evaluation procedure" ;
+    skos:altLabel "Assessment",
+        "Determination of a value, conclusion, or inference by evaluating evidence",
+        "Evaluation procedure (procedure)",
+        "Investigations" .
+
+ns1:420134006 a ns1:Concept ;
+    ns1:is_a ns1:404684003 ;
+    ns1:prefLabel "Propensity to adverse reaction" ;
+    skos:altLabel "Propensity to adverse reaction (finding)",
+        "Propensity to adverse reactions" .
+
+ns1:473011001 a ns1:Concept ;
+    ns1:is_a ns1:473010000 ;
+    ns1:prefLabel "Allergic condition" ;
+    skos:altLabel "Allergic condition (finding)",
+        "The disposition to develop an allergic reaction, the allergic reaction itself or its consequences." .
+
+ns1:609433001 a ns1:Concept ;
+    ns1:is_a ns1:420134006,
+        ns1:473010000 ;
+    ns1:prefLabel "Hypersensitivity disposition" ;
+    skos:altLabel "A propensity to developing an adverse reaction upon exposure to an agent at a dose otherwise tolerated by normal individuals. Revised nomenclature for allergy for global use:Report of the Nomenclature Review Committee of the World Allergy Organization, October 2003.",
+        "Hypersensitivity disposition (finding)",
+        "The disposition to develop an allergic or pseudoallergic reaction.",
+        "The disposition to develop hypersensitivity." .
+
+ns1:404684003 a ns1:Concept ;
+    ns1:prefLabel "Clinical finding" ;
+    skos:altLabel "Clinical finding (finding)" .
+
+ns1:473010000 a ns1:Concept ;
+    ns1:is_a ns1:404684003 ;
+    ns1:prefLabel "Hypersensitivity condition" ;
+    skos:altLabel "Hypersensitivity condition (finding)",
+        "The disposition to develop an allergic or pseudoallergic reaction, the reaction itself or its consequences.",
+        "The disposition to develop hypersensitivity or the manifestation of such a disposition." .
+
+ns1:71388002 a ns1:Concept ;
+    ns1:prefLabel "Procedure" ;
+    skos:altLabel "Procedure (procedure)" .
+

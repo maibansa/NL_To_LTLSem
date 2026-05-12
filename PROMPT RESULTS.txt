@@ -49,7 +49,7 @@ Allergy_Panel & Practitioner or Not_Atopic
 "concept": "Not_Atopic"
 }
 ],
-"formula": "(p1 & p2) | p3"
+"formula": "(Allergy_Panel & Practitioner) | Not_Atopic"
 }
 
 Always Allergy_Panel implies that in the future Practitioner if and only if next  Delay_For_Atopy
@@ -75,7 +75,7 @@ Always Allergy_Panel implies that in the future Practitioner if and only if next
       "concept": "Delay_For_Atopy"
     }
   ],
-  "formula": "G ( p1 -> F ( p2 <-> X p3 ) )"
+  "formula": "G ( Allergy_Panel -> F ( Practitioner <-> X Delay_For_Atopy ) )"
 }
 
 
@@ -116,7 +116,7 @@ Always Allergy_Panel implies that in the future Practitioner if and only if next
       "unit": "seconds"
     },
     "anchorField": "nTimestamp",
-    "arg": "G ( p1 -> ( ( F ( p2 <-> X p3 ) ) & O p4 ) )"
+    "arg": "G ( Allergy_Panel -> ( ( F ( Practitioner <-> X Delay_For_Atopy ) ) & O Food_Allergy_Incidence_Submodule ) )"
   }
 }
 
@@ -150,7 +150,9 @@ Always if an event x is verifies Allergy_Panel this implies that in the future t
       "concept": "Food_Allergy_Incidence_Submodule"
     }
   ],
-  "formula": "G ( x.( p1 -> F y.( ( p2 <-> X p3 ) & O p4 & \"(x,y)y[nTimestamp]-x[nTimestamp] < 7200\" ) ) )"
+  "formula": "G ( x.( Allergy_Panel -> F y.( ( Practitioner <-> X Delay_For_Atopy ) & O Food_Allergy_Incidence_Submodule & \"(x,y)y[Timestamp]-x[Timestamp] < 7200\" ) ) )"
+G ( x.( Allergy_Panel -> F y.( ( Practitioner <-> X Delay_For_Atopy ) & O Food_Allergy_Incidence_Submodule & "(x,y)y[Timestamp]-x[Timestamp] < 7200" ) ) )
+
 }
 
 

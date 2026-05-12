@@ -69,105 +69,150 @@ def get_relevant_context(text: str, n_results: int = 7) -> str:
 def build_compiler_prompt(text: str, context: str, ltl_onto: Dict) -> str:
     # Mantenemos tu prompt con los añadidos de jerarquía lógica
     return f"""
-Act as a Clinical Rule Compiler expert in LTL and Freeze Logic.
+Act as a Clinical Rule Compiler.
 
 ==================================================================
-STRICT ONTOLOGY CONTEXT (ONLY USE THESE CONCEPTS):
-{context}
+CRITICAL ARCHITECTURAL REQUIREMENT: THREE-LAYER SEPARATION
 ==================================================================
+You MUST strictly separate the extraction into two independent layers before generating the JSON:
 
-CRITICAL ARCHITECTURAL REQUIREMENT:
-1. THE DOMAIN SEMANTIC LAYER:
-   Extract clinical concepts into 'propositions'. 
-   Use the 'Type' from the context above as the 'predicate' (e.g., tActivity, aWorkflow).
+    THE DOMAIN SEMANTIC LAYER (The "What"):
+    Extract clinical concepts into a flat list of 'propositions'.
+   
+    List of tActivity: Administer_Allergy_Test, Age_Guard, Allergist_Guard, Allergist_Initial_Visit, Allergy_Panel, Allergy_Unspecified, Atopic, Delay_For_Allergist_Initial_Visit, Delay_For_Atopy, Delay_For_Smoking_History, Drug_Allergy_Incidence_Submodule, End_Allergist_Initial_Visit, Environmental_Allergy_Incidence_Submodule, Female, Food_Allergy_Incidence_Submodule, General_Allergy_CarePlan, Immunotherapy_Submodule, Initial, Living_With_Allergies, Male, No_Infection, Not_Atopic, Potential_COPD_Nonsmoker, Potential_COPD_Smoker, Prescribe_Epipen, Prescribe_OTC_Antihistamine, Terminal.
+    List of tActor: Care_Manager, Clinical_System, Lab_Technician, Pharmacist, Physician, Practitioner, Radiologist.
 
-2. LOGICAL HIERARCHY RULES:
-   - Temporal operators (G, F, H, O) cover the widest scope.
-   - The biconditional (<->) MUST be enclosed in parentheses if inside an F or G operator.
-   - Explain the nesting in the "analysis" field before writing the formula.
+    List of aActionType: at_AllergyOnset, at_CallSubmodule,at_CarePlanStart,at_Delay,at_Encounter,at_EncounterEnd,at_Guard,at_Initial,at_MedicationOrder,at_Procedure,at_Simple,at_Terminal
 
-THE FORMULA LAYER (The "When" and "How"):
+    List of aWorflow: allergies, appendicitis, asthma, breast_cancer,colorectal_cancer,copd,dermatitis,ear_infections,epilepsy,fibromyalgia
+
+    List of labels corresponding to atomic propositions: Activity | ActionType | Workflow 
+    
+    List of labels corresponding to non-atomic propositions: Timestamp | Actor
+
+    List of labels corresponding to graph propositions: Snomed
+    
+    THE FORMULA LAYER (The "When" and "How"):
+    
+    You MUST represent the logical and temporal structure recursively in the formula field using ONLY these patterns:
+    This is a grammar for the correct formulas:
+    Precedence (low → high):
+    ->, <->
+    &
+    |
+    U, S
+    F, O
+    G, H
+    X, Y
+    !
     
-    You MUST represent the logical and temporal structure recursively in the formula field using ONLY these patterns:
+    Associativity:
+    ->, <-> : right-associative
+    &, | : left-associative
+    U, S : left-associative
+    
+    ! : associative
+    F, O : right-associative
+    G, H : right-associative
+    X, Y : right-associative
+    
+    Terminals:
+    CHAR      ::= [a-z]
+    ID        ::= [a-zA-Z_][a-zA-Z_0-9]*
+    
+    Productions:
+    list_of_vars ::=
+          '('')'
+        | '(' CHAR (',' CHAR)* ')'
+    
+    body ::= [^\"]+                         #Comment: the "body" is a one line python code
+    code_form ::= '"' list_of_vars body '"'
+    freeze_form ::= CHAR '.' '(' dltl_form ')'
+    
+    dltl_form ::= 
+          dltl_form '->' dltl_form
+        | dltl_form '<->' dltl_form
+        | dltl_form '&' dltl_form
+        | dltl_form '|' dltl_form
+        | dltl_form 'U' dltl_form
+        | dltl_form 'S' dltl_form
+        | 'F' dltl_form
+        | 'G' dltl_form
+        | 'H' dltl_form
+        | 'X' dltl_form
+        | 'Y' dltl_form
+        | 'O' dltl_form
+        | '!' dltl_form
+        | '(' dltl_form ')'
+        | freeze_form
+        | code_form
+        | ID
+        | 'true'
+        | 'false'
+        
 
-        Atomic: Use the proposition ID string (e.g., "p1").
-
-        LTL Ontology:
-
-        Logig Operators: 
-        ! f     NOT f
-        f | g   f OR g
-        f & g   f AND g
-        f -> g  If f then g
-        f <-> g f if and only if g
-
-        LTL Operators:
-        G f     Always 'f' (Globally, future)
-        H f     'f' happens for every past state (Historical Always)
-        F f     Eventually 'f' will happen (Future)
-        O f     'f' happened in the past (Once)
-        X f     'f' happens at the Next event (False for the last event)
-        Y f     'f' happened at the previous event (False for the first event)
-        f U g   'f' happens Until 'g' is met
-        f S g   'g' happens Since 'f' happened
 
 FREEZE OPERATOR
-The freeze operator binds the value of a non-atomic attribute at a specific trace position to a variable (z) for use in a sub-formula.
+The freeze operator binds the value of a non-atomic attribute at a specific trace position to a variable (x,y,z...) for use in a sub-formula.
 
-Syntax: z.(<formula>)
+Syntax: x.(<formula>)
 Variable: Any value in the range a-z can be used as the identifier.
 - Examples:
-      F a & x.("(x)x[V]<=34+7")
-      F x.("(x)x[p]['b']==22")
-      F x.("(x)x[p]['a']>0")
-      F x.("(x)x[p]['a']>9")
-      F x.("(x)'z' in x[att]")
-      F x.(b & "(x)    x[p]['a']>9")
-      a | b & x.("(x)x[V]==4 or x[V]==2")
-      F b & x.(F y.(a & "(x,y)x[V]==y[V]"))
-      F ((a | b) & z.((X false) & "(z)z[#] == 2"))
-      F ((a | b) & z.((X false) & F y.("(z,y)z[#] == y[#]")))
-      F x.(b & "(x)PROP.IN_DIC(x[p],'b',22)")
-      F x.(b & "(x)PROP.IN_DIC_2(x,p,'b',22)")
+      F a & x.("(x)x[V]<=34+7") where x is a freeze variable, a is one of the labels corresponding to atomic propositions and V is one of the labels of attributes that are non-atomic propositions. "(x)x[V]<=34+7"  is a kind of lambda definition containing the list of variables (x) and python code that has to be translated as it is
+      a | b & x.("(x)x[H]==4 or x[H]==2") where x is a freeze variable, a and b are labels corresponding to atomic propositions and H is one of the labels of attributes that are non-atomic propositions. 
+      F b & x.(F y.(a & "(x,y)x[V]==y[V]"))
+      F ((a | b) & x.((X false) & "(x)x[#] == 2"))  being x a freeze variable, x[#] evaluates to the position of the event in the trace, starting at position 1
+      F x.(X F  y.("(x,y)x[#] + 8 == y[#]"))
+ 
 
-#Note 1: when using freeze variables, for instance 'x', to refer to specific 
-#        events the way to get access to the attributes will by means of expressions
-#        of the form "x[<attribute_name>]", a in the example before.
+Note 1: when using freeze variables, for instance 'x', to refer to specific 
+        events the way to get access to the attributes will by means of expressions
+        of the form "x[<attribute_name>]" or "x[#]".   
 
-#Note 2: By default, "my_propositions.py" is imported at booting time as "PROP". 
-#        This file is the place to write the Python functions used in the non-atomic propositions.
-#        In the examples, we are assuming that both, "IN_DIC" and "IN_DIC_2"
-#        are defined in "my_propositions.py". Add this funcions in the json.
-
-Note 3: In formulas like F x.("(x)x[p]['b']==22"), p can be only a predicate (gSnomed | aActivity | aActionType | aWorkflow | aActor) non-atomic and non-graph proposition.
+Note 2: By default, "my_propositions.py" is imported at booting time as "PROP". 
+        This file is the place to write the Python functions used in the non-atomic propositions.
+        
+Note 3: In the domain of a freeze variable, a string of the form "(list_of_freeze_names)python_code" is a kind of lambda definition, that has to be translated as it is
+ 
 ==================================================================
 
 NEVER mix clinical concepts into temporalStructure, and NEVER mix temporal constraints into propositions.
 ==================================================================
 
 - CANONICAL TIME NORMALIZATION (REQUIRED):
- If a temporal bound is mentioned, convert it to seconds
+ If a temporal bound is mentioned, convert it to seconds
 ==================================================================
- - ABOUT DOMAIN SEMANTICS
+ - ABOUT DOMAIN SEMANTICS
 
-gSnomed propositions always are of type graph and in the formula you must include PROP.concept_name(x,y,..) where x,y ... are freeze variables and different worlds of concept_name must include _ in the spaces 
+Snomed propositions always are of type graph and in the formula you must include "PROP.concept_name(x,y,..)" where x,y ... are freeze variables and different worlds of concept_name must include _ in the spaces  This must be a string of the form "(list_of_freeze_names)python_code" 
 
 ==================================================================
 
-Return ONLY valid JSON:
+
+
+
+Return ONLY valid JSON based on this template:
+
 {{
-"analysis": "Explanation of the nested temporal structure",
 "propositions": [
 {{
 "id": "p1",
-"predicate": "gSnomed | aActivity | aActionType | aWorkflow | aActor",
-"type": "graph | atomic | string | number | boolean",
-"concept": "Name_From_List"
+"predicate":  
+"type": "graph",
+"concept": "concept_name"
 }}
 ],
-"formula": "F x.(p1 & ...)"
+"formula":
+{{
+
 }}
-### CLINICAL RULE TO TRANSLATE:
+"formula2":
+{{
+formula where propositions p1, p2... (only propositions) has been replaced by the corresponding concepts.  PROP.concept_name  must not be replaced.
+}}
+### CLINICAL RULES:  
+Always, if 'at_AllergyOnset' happens, the patient must be 'Atopic' within 7200 seconds or the care plan is void.
+
 "{text}"
 """
 

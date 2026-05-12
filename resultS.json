@@ -1,0 +1,52 @@
+[
+  {
+    "id": "r1",
+    "sentence": "If a 'snomed' reference to 'Asthma' is true, then 'at_AllergyOnset' is mandatory.",
+    "formula": "G (x.(\"(x)PROP.Asthma(x[snomed])\") -> at_AllergyOnset)"
+  },
+  {
+    "id": "r2",
+    "sentence": "In the breast_cancer workflow, any medication order must be cross-referenced against the 'Inhaled steroid therapy' SNOMED hierarchy.",
+    "formula": "G ((breast_cancer & at_MedicationOrder) -> x.(\"(x)PROP.Inhaled_steroid_therapy(x[snomed])\"))"
+  },
+  {
+    "id": "r3",
+    "sentence": "If the 'clinicalCode' in 'Allergy_Panel' is a 'snomed' reference 'SCTID: 252325008', then the actor must be a 'Practitioner' with specialization in 'Gynecology service'.",
+    "formula": "G ((Allergy_Panel & SCTID_252325008) -> (Practitioner & x.(\"(x)PROP.Gynecology_service(x[snomed])\")))"
+  },
+  {
+    "id": "r4",
+    "sentence": "If 'Potential_COPD_Smoker' is identified, the next state must include a 'Snomed' code related to 'Smoking cessation therapy'.",
+    "formula": "G (Potential_COPD_Smoker -> X x.(\"(x)PROP.Smoking_cessation_therapy(x[snomed])\"))"
+  },
+  {
+    "id": "r5",
+    "sentence": "Every 'at_AllergyOnset' event must be linked to a 'Snomed' concept representing a clinical manifestation (e.g., 'Atopic dermatitis').",
+    "formula": "G (at_AllergyOnset -> x.(\"(x)PROP.Atopic_dermatitis(x[snomed])\"))"
+  },
+  {
+    "id": "r6",
+    "sentence": "If 'Drug_Allergy_Incidence_Submodule' is active, any 'at_MedicationOrder' must contain a valid SNOMED hierarchy code for 'Administration of intravenous fluids'.",
+    "formula": "G (Drug_Allergy_Incidence_Submodule -> (at_MedicationOrder -> x.(\"(x)PROP.Administration_of_intravenous_fluids(x[snomed])\")))"
+  },
+  {
+    "id": "r7",
+    "sentence": "A trace cannot contain a 'Snomed' for 'Malignant neoplasm of breast' if the 'Allergist_Guard' recorded a 'False' outcome.",
+    "formula": "G (Allergist_Guard -> (! (x.(\"(x)PROP.Malignant_neoplasm_of_breast(x[snomed])\"))))"
+  },
+  {
+    "id": "r8",
+    "sentence": "Ensure that when an Epipen is prescribed, the system validates the clinical nature via 'Snomed' reference to 'Allergic disposition'.",
+    "formula": "G (Prescribe_Epipen -> x.(\"(x)PROP.Allergic_disposition(x[snomed])\"))"
+  },
+  {
+    "id": "r9",
+    "sentence": "Whenever 'Administer_Allergy_Test' is executed, it must eventually be followed by a 'Snomed' finding of either 'Asthma screening' or 'Allergy screening test'.",
+    "formula": "G (Administer_Allergy_Test -> F (x.(\"(x)PROP.Asthma_screening(x[snomed])\") | x.(\"(x)PROP.Allergy_screening_test(x[snomed])\")))"
+  },
+  {
+    "id": "r10",
+    "sentence": "If 'Allergy_Unspecified' occurs, the event must contain a 'Snomed' reference to the concept 'Contact dermatitis'.",
+    "formula": "G (Allergy_Unspecified -> x.(\"(x)PROP.Contact_dermatitis(x[snomed])\"))"
+  }
+]
