@@ -51,52 +51,52 @@
   },
   {
     "id": "r11",
-    "sentence": "Si se realiza un Administer_Allergy_Test (x), el siguiente evento Allergy_Panel (y) debe ser ejecutado por el mismo actor que realizó la prueba inicial.",
+    "sentence": "If an Administer_Allergy_Test (x) is performed, the following Allergy_Panel (y) event must be executed by the same actor who performed the initial test.",
     "formula": "G (Administer_Allergy_Test & x.(X (Allergy_Panel & y.(\"(x,y)x[Actor] == y[Actor]\"))))"
   },
   {
     "id": "r12",
-    "sentence": "Si ocurre una Allergist_Initial_Visit (x), el evento End_Allergist_Initial_Visit (y) debe cumplir que y[Timestamp] - x[Timestamp] < 3600.",
+    "sentence": "If an Allergist_Initial_Visit (x) occurs, the End_Allergist_Initial_Visit (y) event must satisfy that y[Timestamp] - x[Timestamp] < 3600.",
     "formula": "G (Allergist_Initial_Visit & x.(F (End_Allergist_Initial_Visit & y.(\"(x,y)y[Timestamp] - x[Timestamp] < 3600\"))))"
   },
   {
     "id": "r13",
-    "sentence": "Si se inicia el Drug_Allergy_Incidence_Submodule (x), la actividad General_Allergy_CarePlan (y) debe ocurrir exactamente en la posición x[#] + 3.",
+    "sentence": "If the Drug_Allergy_Incidence_Submodule (x) is initiated, the General_Allergy_CarePlan (y) activity must occur exactly at position x[#] + 3.",
     "formula": "G (Drug_Allergy_Incidence_Submodule & x.(F (General_Allergy_CarePlan & y.(\"(x,y)y[#] == x[#] + 3\"))))"
   },
   {
     "id": "r14",
-    "sentence": "Tras el evento Initial (x), cualquier at_Procedure (y) posterior debe tener un x[Timestamp] < y[Timestamp].",
+    "sentence": "After the Initial (x) event, any subsequent at_Procedure (y) must satisfy x[Timestamp] < y[Timestamp].",
     "formula": "G (Initial & x.(G (at_Procedure -> y.(\"(x,y)x[Timestamp] < y[Timestamp]\"))))"
   },
   {
     "id": "r15",
-    "sentence": "Si un Physician realiza la Allergist_Initial_Visit (x), todos los eventos at_MedicationOrder (y) posteriores deben ser realizados por ese mismo actor.",
+    "sentence": "If a Physician performs the Allergist_Initial_Visit (x), all subsequent at_MedicationOrder (y) events must be performed by that same actor.",
     "formula": "G (Physician & Allergist_Initial_Visit & x.(G (at_MedicationOrder -> y.(\"(x,y)x[Actor] == y[Actor]\"))))"
   },
   {
     "id": "r16",
-    "sentence": "Si ocurren Environmental_Allergy_Incidence_Submodule (x) y Food_Allergy_Incidence_Submodule (y), el timestamp de x debe ser menor al de y.",
+    "sentence": "If Environmental_Allergy_Incidence_Submodule (x) and Food_Allergy_Incidence_Submodule (y) occur, the timestamp of x must be less than that of y.",
     "formula": "G (Environmental_Allergy_Incidence_Submodule & x.(F (Food_Allergy_Incidence_Submodule & y.(\"(x,y)x[Timestamp] < y[Timestamp]\"))))"
   },
   {
     "id": "r17",
-    "sentence": "Si un Practitioner inicia un at_Encounter (x), el evento at_Terminal (y) de esa traza debe tener un actor diferente al del inicio.",
+    "sentence": "If a Practitioner initiates an at_Encounter (x), the at_Terminal (y) event of that trace must have a different actor from the one at the start.",
     "formula": "G (Practitioner & at_Encounter & x.(F (at_Terminal & y.(\"(x,y)x[Actor] != y[Actor]\"))))"
   },
   {
     "id": "r18",
-    "sentence": "Si se registra el estado Atopic (x), el evento Prescribe_OTC_Antihistamine (y) debe ocurrir antes de que la posición sea y[#] > x[#] + 10.",
+    "sentence": "If the Atopic (x) state is registered, the Prescribe_OTC_Antihistamine (y) event must occur before the position satisfies y[#] > x[#] + 10.",
     "formula": "G (Atopic & x.(F (Prescribe_OTC_Antihistamine & y.(\"(x,y)y[#] <= x[#] + 10\"))))"
   },
   {
     "id": "r19",
-    "sentence": "Si el Clinical_System ejecuta una at_Guard (x), el siguiente evento at_Delay (y) debe ser gestionado por el mismo actor.",
+    "sentence": "If the Clinical_System executes an at_Guard (x), the following at_Delay (y) event must be handled by the same actor.",
     "formula": "G (Clinical_System & at_Guard & x.(X (at_Delay & y.(\"(x,y)x[Actor] == y[Actor]\"))))"
   },
   {
     "id": "r20",
-    "sentence": "Ninguna actividad de Immunotherapy_Submodule (y) puede tener una posición y[#] menor a la posición del evento Allergy_Panel (x).",
+    "sentence": "No Immunotherapy_Submodule (y) activity may have a position y[#] lower than the position of the Allergy_Panel (x) event.",
     "formula": "G (Immunotherapy_Submodule & y.(O (Allergy_Panel & x.(\"(x,y)x[#] < y[#]\"))))"
   },
 

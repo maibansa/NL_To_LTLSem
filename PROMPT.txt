@@ -159,4 +159,22 @@ Return ONLY valid JSON based on this template:
 formula where propositions p1, p2... (only propositions) has been replaced by the corresponding concepts.  PROP.concept_name  must not be replaced.
 }}
 ### CLINICAL RULES:  
-If a 'snomed' reference to 'Asthma' is true, then 'at_AllergyOnset' is mandatory.
+11. Si se realiza una prueba de alergia, el panel de alergias que se ejecute después debe ser realizado por el mismo profesional que efectuó la prueba inicial.
+
+12. Si ocurre una visita inicial con el alergólogo, el evento de finalización de dicha visita debe suceder en menos de 3600 segundos (1 hora) desde su inicio.
+
+13. Si se inicia el submódulo de incidencia de alergias a medicamentos, el plan general de cuidado de alergias debe ejecutarse exactamente tres eventos después.
+
+14. Después del evento inicial, cualquier procedimiento posterior debe ocurrir en un momento posterior en el tiempo.
+
+15. Si un médico realiza la visita inicial con el alergólogo, todas las órdenes de medicación posteriores deben ser realizadas por ese mismo médico.
+
+16. Si ocurren tanto el submódulo de incidencia de alergias ambientales como el submódulo de incidencia de alergias alimentarias, el primero debe ocurrir antes que el segundo.
+
+17. Si un profesional sanitario inicia un encuentro clínico, el evento final de esa traza debe ser realizado por un actor diferente.
+
+18. Si se registra un estado atópico, la prescripción de un antihistamínico de venta libre debe ocurrir antes de que transcurran más de diez posiciones de eventos.
+
+19. Si el sistema clínico ejecuta una condición de control (guard), el evento de retraso que ocurra después debe ser gestionado por el mismo actor.
+
+20. Ninguna actividad perteneciente al submódulo de inmunoterapia puede ocurrir antes que el evento del panel de alergias.

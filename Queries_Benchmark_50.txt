@@ -35,25 +35,25 @@ BLOQUE 1 --- SEMANTIC & SNOMED CT INTEGRITY ---
 
 BLOQUE 2 --- DATA CORRELATION & FREEZE OPERATOR (ADVANCED) ---
 
-11. Si se realiza un Administer_Allergy_Test (x), el siguiente evento Allergy_Panel (y) debe ser ejecutado por el mismo actor que realizó la prueba inicial.
+11. If an Administer_Allergy_Test (x) is performed, the subsequent Allergy_Panel event (y) must be executed by the same actor who performed the initial test.
 
-12. Si ocurre una Allergist_Initial_Visit (x), el evento End_Allergist_Initial_Visit (y) debe cumplir que y[Timestamp] - x[Timestamp] < 3600.
+12. If an Allergist_Initial_Visit (x) occurs, the End_Allergist_Initial_Visit event (y) must satisfy the condition: y[Timestamp] - x[Timestamp] < 3600.
 
-13. Si se inicia el Drug_Allergy_Incidence_Submodule (x), la actividad General_Allergy_CarePlan (y) debe ocurrir exactamente en la posición x[#] + 3.
+13. If the Drug_Allergy_Incidence_Submodule (x) is initiated, the General_Allergy_CarePlan activity (y) must occur exactly at position x[#] + 3.
 
-14. Tras el evento Initial (x), cualquier at_Procedure (y) posterior debe tener un x[Timestamp] < y[Timestamp].
+14. After the Initial event (x), any subsequent at_Procedure (y) must satisfy x[Timestamp] < y[Timestamp].
 
-15. Si un Physician realiza la Allergist_Initial_Visit (x), todos los eventos at_MedicationOrder (y) posteriores deben ser realizados por ese mismo actor.
+15. If a Physician performs the Allergist_Initial_Visit (x), all subsequent at_MedicationOrder events (y) must be performed by that same actor.
 
-16. Si ocurren Environmental_Allergy_Incidence_Submodule (x) y Food_Allergy_Incidence_Submodule (y), el timestamp de x debe ser menor al de y.
+16. If both Environmental_Allergy_Incidence_Submodule (x) and Food_Allergy_Incidence_Submodule (y) occur, the timestamp of x must be earlier than that of y.
 
-17. Si un Practitioner inicia un at_Encounter (x), el evento at_Terminal (y) de esa traza debe tener un actor diferente al del inicio.
+17. If a Practitioner initiates an at_Encounter (x), the at_Terminal event (y) in that trace must have a different actor from the one who initiated it.
 
-18. Si se registra el estado Atopic (x), el evento Prescribe_OTC_Antihistamine (y) debe ocurrir antes de que la posición sea y[#] > x[#] + 10.
+18. If the Atopic status (x) is recorded, the Prescribe_OTC_Antihistamine event (y) must occur before the condition y[#] > x[#] + 10 is reached.
 
-19. Si el Clinical_System ejecuta una at_Guard (x), el siguiente evento at_Delay (y) debe ser gestionado por el mismo actor.
+19. If the Clinical_System executes an at_Guard (x), the subsequent at_Delay event (y) must be handled by the same actor.
 
-20. Ninguna actividad de Immunotherapy_Submodule (y) puede tener una posición y[#] menor a la posición del evento Allergy_Panel (x).
+20. No activity in the Immunotherapy_Submodule (y) may have a position y[#] lower than the position of the Allergy_Panel event (x).
 
 "formula2": {
 ok "r11": "G (Administer_Allergy_Test & x.(X (Allergy_Panel & y.("(x,y)x[Actor] == y[Actor]"))))",
@@ -212,3 +212,51 @@ sem "r48": "G (x.("(x)PROP.Observable_entity(x)") -> x.("(x)'unit' in x"))",
 sem "r49": "G ((breast_cancer & at_Initial) -> X (!(x.("(x)PROP.Surgical_procedure(x)" | "(x)PROP.Therapeutic_procedure(x)")) U Female))",
 ok  "r50": "G (dermatitis -> !Prescribe_Epipen)"
   }
+  
+  
+ 
+  
+### CLINICAL RULES:  EN CASTELLANO
+11. Si se realiza una prueba de alergia, el panel de alergias que se ejecute después debe ser realizado por el mismo profesional que efectuó la prueba inicial.
+
+12. Si ocurre una visita inicial con el alergólogo, el evento de finalización de dicha visita debe suceder en menos de 3600 segundos (1 hora) desde su inicio.
+
+13. Si se inicia el submódulo de incidencia de alergias a medicamentos, el plan general de cuidado de alergias debe ejecutarse exactamente tres eventos después.
+
+14. Después del evento inicial, cualquier procedimiento posterior debe ocurrir en un momento posterior en el tiempo.
+
+15. Si un médico realiza la visita inicial con el alergólogo, todas las órdenes de medicación posteriores deben ser realizadas por ese mismo médico.
+
+16. Si ocurren tanto el submódulo de incidencia de alergias ambientales como el submódulo de incidencia de alergias alimentarias, el primero debe ocurrir antes que el segundo.
+
+17. Si un profesional sanitario inicia un encuentro clínico, el evento final de esa traza debe ser realizado por un actor diferente.
+
+18. Si se registra un estado atópico, la prescripción de un antihistamínico de venta libre debe ocurrir antes de que transcurran más de diez posiciones de eventos.
+
+19. Si el sistema clínico ejecuta una condición de control (guard), el evento de retraso que ocurra después debe ser gestionado por el mismo actor.
+
+20. Ninguna actividad perteneciente al submódulo de inmunoterapia puede ocurrir antes que el evento del panel de alergias.
+
+--------------------
+
+11. rule_11: G (Administer_Allergy_Test & x.(F (Allergy_Panel & y.("(x,y)x[Actor] == y[Actor]"))))
+
+12. rule_12: G (Allergist_Initial_Visit & x.(F (End_Allergist_Initial_Visit & y.("(x,y)y[Timestamp] - x[Timestamp] < 3600"))))
+
+13. rule_13: G (Drug_Allergy_Incidence_Submodule & x.(F (General_Allergy_CarePlan & y.("(x,y)y[#] == x[#] + 3"))))
+
+14. rule_14: G (Initial & x.(G (at_Procedure & y.("(x,y)y[Timestamp] > x[Timestamp]"))))
+
+15. rule_15: G (Allergist_Initial_Visit & x.(G (at_MedicationOrder & y.("(x,y)x[Actor] == y[Actor]"))))
+
+16. rule_16: (F Environmental_Allergy_Incidence_Submodule & F Food_Allergy_Incidence_Submodule) -> (!Food_Allergy_Incidence_Submodule U Environmental_Allergy_Incidence_Submodule)
+
+17. rule_17: G (at_Encounter & x.(F (at_Terminal & y.(X false & "(x,y)x[Actor] != y[Actor]"))))
+
+18. rule_18: G (Atopic & x.(F (Prescribe_OTC_Antihistamine & y.("(x,y)y[#] <= x[#] + 10"))))
+
+19. rule_19: G (at_Guard & x.("(x)x[Actor] == 'Clinical_System'" & F (at_Delay & y.("(x,y)x[Actor] == y[Actor]"))))
+
+20. rule_20: !Immunotherapy_Submodule U Allergy_Panel
+
+ 

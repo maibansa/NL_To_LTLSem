@@ -140,7 +140,7 @@ def main():
 
     # Inicializar Gemma
     print("\n[1/4] Cargando Gemma 2...")
-    llm = Llama(model_path=Config.MODEL_PATH, n_ctx=4096, n_threads=8, verbose=False)
+    llm = Llama(model_path=Config.MODEL_PATH, n_ctx=4096, n_threads=17, verbose=False)
 
     # Cargar inventario local (NQ)
     print("\n[2/4] Construyendo inventario desde el log local...")
